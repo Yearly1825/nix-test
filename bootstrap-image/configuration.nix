@@ -1,5 +1,12 @@
 { config, pkgs, lib, ... }:
 {
+  # Add this at the top level (not inside boot = {})
+  nixpkgs.overlays = [(final: prev: {
+    makeModulesClosure = x: prev.makeModulesClosure (x // {
+      allowMissing = true;
+    });
+  })];
+
   system.stateVersion = "24.05";
   boot = {
     loader = {
