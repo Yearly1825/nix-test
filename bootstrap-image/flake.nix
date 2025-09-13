@@ -1,18 +1,17 @@
 {
   description = "Bootstrap image for Raspberry Pi fleet";
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
   };
   outputs = { self, nixpkgs }: {
     nixosConfigurations = {
       pi-bootstrap = nixpkgs.lib.nixosSystem {
         system = "aarch64-linux";
         modules = [
-          # Use the explicit nixpkgs input path
+          # Use the explicit nixpkgs input path for SD image
           "${nixpkgs}/nixos/modules/installer/sd-card/sd-image-aarch64.nix"
-          # Ensure pure evaluation by passing nixpkgs to modules
+          # Ensure pure evaluation by setting nixpkgs.pkgs
           {
-            # Optional: Explicitly set nixpkgs for the configuration
             nixpkgs.pkgs = nixpkgs.legacyPackages.aarch64-linux;
           }
           ./configuration.nix
