@@ -4,9 +4,9 @@ set -euo pipefail
 # Bootstrap script for initial Raspberry Pi configuration
 # This script should be run after flashing NixOS to the SD card
 
-REPO_URL="${1:-https://github.com/yourusername/sensor-config.git}"
+REPO_URL="${1:-https://github.com/Yearly1825/nix-test.git}"
 SETUP_KEY="${2:-}"
-SSH_KEY="${3:-}"
+SSH_KEY="${3:-ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIM9FIqbH/3WrkR++YRAB5/o95uwBEhmNsyG+LmNObi+T}"
 
 echo "=== NixOS Sensor Bootstrap ==="
 echo "Repository: $REPO_URL"
