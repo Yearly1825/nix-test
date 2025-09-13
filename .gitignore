@@ -1,0 +1,25 @@
+# Nix
+result
+result-*
+*.qcow2
+
+# Secrets
+secrets/*
+!secrets/.gitignore
+
+# Hardware-specific
+hardware-configuration.nix.local
+
+# Logs
+*.log
+*.pcap
+*.pcapng
+*.kismet
+
+# Temp files
+*.tmp
+*.swp
+*~
+
+# macOS
+.DS_Store
