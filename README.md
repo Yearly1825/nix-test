@@ -78,7 +78,7 @@ sudo netbird status
 ```
 .
 ├── flake.nix                 # Flake definition
-├── configuration.nix         # Main system configuration  
+├── configuration.nix         # Main system configuration
 ├── hardware-configuration.nix # Hardware-specific settings
 ├── modules/
 │   ├── ssh.nix              # SSH hardening and fail2ban
@@ -240,7 +240,7 @@ iftop
 # System logs
 journalctl -xe
 
-# Network debugging  
+# Network debugging
 nmcli device status
 ip addr show
 ping 8.8.8.8
@@ -285,7 +285,7 @@ Create new module in `modules/`:
   options.services.myService = {
     enable = lib.mkEnableOption "My custom service";
   };
-  
+
   config = lib.mkIf config.services.myService.enable {
     # Service configuration
   };
@@ -340,7 +340,7 @@ MIT License - See LICENSE file
 
 **Note**: Remember to replace placeholder values:
 - Repository URLs
-- Netbird setup keys  
+- Netbird setup keys
 - SSH public keys
 - Default passwords
 - Network SSIDs
