@@ -1,42 +1,27 @@
 { config, pkgs, lib, ... }:
 {
-  # System version - keep for compatibility
   system.stateVersion = "24.05";
-
-  # Basic boot configuration
   boot = {
     loader = {
       grub.enable = false;
       generic-extlinux-compatible.enable = true;
     };
-    # Kernel modules for Raspberry Pi
     kernelModules = [ "bcm2835-v4l2" ];
-    # Ensure compatibility with sd-image-aarch64.nix
     growPartition = true;
   };
-
-  # Enable flakes support
   nix = {
-    package = pkgs.nixVersions.stable; # Updated from nixFlakes
+    package = pkgs.nixVersions.stable;
     settings.experimental-features = [ "nix-command" "flakes" ];
   };
-
-  # Temporary hostname
   networking.hostName = "pi-bootstrap";
-
-  # Enable SSH for debugging
   services.openssh = {
     enable = true;
     settings = {
       PermitRootLogin = "yes";
-      PasswordAuthentication = true; # Only for bootstrap phase
+      PasswordAuthentication = true;
     };
   };
-
-  # Temporary root password - CHANGE THIS!
   users.users.root.initialPassword = "bootstrap";
-
-  # Essential packages
   environment.systemPackages = with pkgs; [
     git
     curl
@@ -46,14 +31,10 @@
     htop
     tmux
   ];
-
-  # Copy bootstrap script
   environment.etc."bootstrap/bootstrap.sh" = {
     source = ./bootstrap.sh;
     mode = "0755";
   };
-
-  # Bootstrap service
   systemd.services.pi-bootstrap = {
     description = "Raspberry Pi Bootstrap Process";
     wantedBy = [ "multi-user.target" ];
