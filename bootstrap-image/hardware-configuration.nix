@@ -10,12 +10,9 @@
     fsType = "vfat";
   };
   boot = {
-    kernelPackages = pkgs.linuxPackages_rpi4;
-    loader.raspberryPi = {
-      enable = true;
-      version = 4;
-    };
-    loader.raspberryPi.firmwareConfig = ''
+    kernelPackages = pkgs.linuxPackages_rpi4; # For Pi 4; use linuxPackages_rpi5 for Pi 5
+    # Optional: Firmware config for GPU memory (if still needed)
+    loader.firmwareConfig = ''
       gpu_mem=256
     '';
   };
