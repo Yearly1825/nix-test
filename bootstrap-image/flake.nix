@@ -1,7 +1,7 @@
 {
   description = "Bootstrap image for Raspberry Pi fleet";
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
   };
   outputs = { self, nixpkgs }: let
     system = "aarch64-linux";
