@@ -5,14 +5,12 @@
   };
   outputs = { self, nixpkgs }: let
     system = "aarch64-linux";
-    # Explicitly pass nixpkgs to avoid <nixpkgs> lookups
     piConfig = nixpkgs.lib.nixosSystem {
       inherit system;
       modules = [
         "${nixpkgs}/nixos/modules/installer/sd-card/sd-image-aarch64.nix"
         {
           nixpkgs.pkgs = nixpkgs.legacyPackages.${system};
-          # Optional: Set Raspberry Pi-specific kernel (adjust for your model)
           boot.kernelPackages = nixpkgs.legacyPackages.${system}.linuxPackages_rpi4;
         }
         ./configuration.nix
