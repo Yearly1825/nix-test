@@ -10,10 +10,10 @@
     fsType = "vfat";
   };
   boot = {
-    kernelPackages = pkgs.linuxPackages_rpi4; # For Pi 4; use linuxPackages_rpi5 for Pi 5
+    kernelPackages = pkgs.linuxPackages_rpi4;
     loader.raspberryPi = {
       enable = true;
-      version = 4; # Change to 3 or 5 for other models
+      version = 4;
     };
     loader.raspberryPi.firmwareConfig = ''
       gpu_mem=256
@@ -23,7 +23,7 @@
     enableRedistributableFirmware = true;
     deviceTree = {
       enable = true;
-      filter = "*rpi-4-*.dtb"; # Adjust for Pi model
+      filter = "*rpi-4-*.dtb";
     };
   };
 }

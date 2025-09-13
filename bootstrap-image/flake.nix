@@ -11,7 +11,6 @@
         "${nixpkgs}/nixos/modules/installer/sd-card/sd-image-aarch64.nix"
         {
           nixpkgs.pkgs = nixpkgs.legacyPackages.${system};
-          boot.kernelPackages = nixpkgs.legacyPackages.${system}.linuxPackages_rpi4;
         }
         ./configuration.nix
         ./hardware-configuration.nix
