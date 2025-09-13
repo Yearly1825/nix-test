@@ -4,43 +4,92 @@ set -euo pipefail
 # Bootstrap script for initial Raspberry Pi configuration
 # This script should be run after flashing NixOS to the SD card
 
-REPO_URL="${1:-https://github.com/yearly1825/nix-test.git}"
+REPO_URL="${1:-https://github.com/yourusername/sensor-config.git}"
 SETUP_KEY="${2:-}"
-SSH_KEY="${3:-ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIM9FIqbH/3WrkR++YRAB5/o95uwBEhmNsyG+LmNObi+T}"
+SSH_KEY="${3:-}"
 
 echo "=== NixOS Sensor Bootstrap ==="
 echo "Repository: $REPO_URL"
 
+# Function to handle errors
+error_exit() {
+    echo "Error: $1" >&2
+    exit 1
+}
+
+# Check if running as root
+if [ "$EUID" -ne 0 ]; then
+    echo "Please run as root (use sudo)"
+    exit 1
+fi
+
 # Update system
 echo "Updating package database..."
-nix-channel --update
+nix-channel --update || error_exit "Failed to update nix channels"
 
 # Install git if not present
 if ! command -v git &> /dev/null; then
     echo "Installing git..."
-    nix-env -iA nixos.git
+    nix-env -iA nixos.git || error_exit "Failed to install git"
 fi
 
 # Clone configuration repository
 echo "Cloning configuration repository..."
 cd /tmp
 rm -rf sensor-config
-git clone "$REPO_URL" sensor-config
+git clone "$REPO_URL" sensor-config || error_exit "Failed to clone repository"
 cd sensor-config
+
+# Use the minimal hardware configuration if it doesn't exist
+if [ ! -f hardware-configuration.nix ]; then
+    echo "Generating hardware configuration..."
+    nixos-generate-config --show-hardware-config > hardware-configuration.nix 2>/dev/null || {
+        echo "Using minimal hardware configuration..."
+        cat > hardware-configuration.nix <<'EOF'
+{ config, lib, pkgs, modulesPath, ... }:
+{
+  imports = [ (modulesPath + "/installer/scan/not-detected.nix") ];
+
+  boot = {
+    kernelPackages = pkgs.linuxKernel.packages.linux_rpi4;
+    initrd.availableKernelModules = [ "xhci_pci" "usbhid" "usb_storage" ];
+    loader = {
+      grub.enable = false;
+      generic-extlinux-compatible.enable = true;
+    };
+  };
+
+  fileSystems."/" = {
+    device = "/dev/disk/by-label/NIXOS_SD";
+    fsType = "ext4";
+    options = [ "noatime" ];
+  };
+
+  fileSystems."/boot" = {
+    device = "/dev/disk/by-label/FIRMWARE";
+    fsType = "vfat";
+  };
+
+  swapDevices = [ ];
+  hardware.enableRedistributableFirmware = true;
+  nixpkgs.hostPlatform = lib.mkDefault "aarch64-linux";
+}
+EOF
+    }
+fi
 
 # Add SSH key if provided
 if [ -n "$SSH_KEY" ]; then
     echo "Adding SSH public key..."
-    mkdir -p /tmp/ssh-keys
-    echo "$SSH_KEY" > /tmp/ssh-keys/authorized_keys
-
-    # Update configuration with SSH key
-    sed -i "s|# \"ssh-ed25519.*|\"$SSH_KEY\"|" configuration.nix
+    # Escape special characters in SSH key
+    ESCAPED_KEY=$(printf '%s\n' "$SSH_KEY" | sed 's/[[\.*^$()+?{|]/\\&/g')
+    sed -i "s|# \"ssh-ed25519.*|\"$ESCAPED_KEY\"|" configuration.nix
 fi
 
 # Add Netbird setup key if provided
 if [ -n "$SETUP_KEY" ]; then
     echo "Configuring Netbird setup key..."
+    mkdir -p secrets
     cat > secrets/netbird-setup.nix <<EOF
 { config, ... }:
 {
@@ -48,17 +97,38 @@ if [ -n "$SETUP_KEY" ]; then
 }
 EOF
 
-    # Add to flake.nix modules
-    sed -i '/\.\/modules\/kismet\.nix/a\        ./secrets/netbird-setup.nix' flake.nix
+    # Check if secrets module is already in flake.nix
+    if ! grep -q "secrets/netbird-setup.nix" flake.nix; then
+        # Add to flake.nix modules
+        sed -i '/\.\/modules\/kismet\.nix/a\        ./secrets/netbird-setup.nix' flake.nix
+    fi
 fi
 
-# Copy hardware configuration from current system
-echo "Copying hardware configuration..."
-cp /etc/nixos/hardware-configuration.nix ./hardware-configuration.nix
+# Test build first
+echo "Testing configuration build..."
+nixos-rebuild dry-build --flake .#sensor 2>&1 | tee /tmp/build.log || {
+    echo "Build test failed. Checking for common issues..."
+
+    if grep -q "tpm2" /tmp/build.log; then
+        echo "TPM2 error detected. Removing hardware module..."
+        # Remove nixos-hardware from flake.nix
+        sed -i '/nixos-hardware/d' flake.nix
+        sed -i 's/nixos-hardware\.nixosModules\.raspberry-pi-4//' flake.nix
+        sed -i '/^[[:space:]]*$/d' flake.nix
+    fi
+
+    if grep -q "raspberry-pi.*4.*enable" /tmp/build.log; then
+        echo "Removing Raspberry Pi 4 specific options..."
+        sed -i '/hardware\.raspberry-pi\."4"/,/};/d' hardware-configuration.nix
+    fi
+
+    echo "Retrying build..."
+    nixos-rebuild dry-build --flake .#sensor || error_exit "Build failed after fixes"
+}
 
 # Build and switch to new configuration
 echo "Building system configuration..."
-nixos-rebuild switch --flake .#sensor
+nixos-rebuild switch --flake .#sensor || error_exit "Failed to switch configuration"
 
 echo "=== Bootstrap Complete ==="
 echo "System configured successfully!"
