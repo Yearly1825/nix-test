@@ -98,37 +98,10 @@ log_info "  Service IP:     $DISCOVERY_SERVICE_IP"
 log_info "  Config Repo:    $CONFIG_REPO_URL"
 log_info "  Output Dir:     $OUTPUT_DIR"
 
-# Create temporary nix expression with injected values
-TEMP_BUILD_FILE=$(mktemp)
-cat > "$TEMP_BUILD_FILE" << EOF
-{
-  description = "Temporary bootstrap build with injected values";
-  inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
-  };
-  outputs = { self, nixpkgs }: let
-    system = "aarch64-linux";
-  in {
-    packages.\${system}.default = (nixpkgs.lib.nixosSystem {
-      inherit system;
-      specialArgs = {
-        discoveryPsk = "$DISCOVERY_PSK";
-        discoveryServiceIp = "$DISCOVERY_SERVICE_IP";
-        configRepoUrl = "$CONFIG_REPO_URL";
-      };
-      modules = [
-        "\${nixpkgs}/nixos/modules/installer/sd-card/sd-image-aarch64.nix"
-        {
-          nixpkgs.pkgs = nixpkgs.legacyPackages.\${system};
-        }
-        ./configuration-updated.nix
-        ./hardware-configuration.nix
-        ./network-config.nix
-      ];
-    }).config.system.build.sdImage;
-  };
-}
-EOF
+# Set environment variables for the flake
+export DISCOVERY_PSK="$DISCOVERY_PSK"
+export DISCOVERY_SERVICE_IP="$DISCOVERY_SERVICE_IP"
+export CONFIG_REPO_URL="$CONFIG_REPO_URL"
 
 # Platform detection for cross-compilation
 HOST_ARCH=$(uname -m)
@@ -159,7 +132,7 @@ fi
 
 # Build the image
 log_info "Starting build process with args: $CROSS_ARGS"
-if nix build -f "$TEMP_BUILD_FILE" --out-link "$OUTPUT_DIR" $CROSS_ARGS --show-trace; then
+if nix build .#bootstrap-image --out-link "$OUTPUT_DIR" $CROSS_ARGS --show-trace; then
     log_info "✅ Build completed successfully!"
 
     # Get the actual image path
@@ -184,8 +157,5 @@ else
     log_error "❌ Build failed!"
     exit 1
 fi
-
-# Cleanup
-rm -f "$TEMP_BUILD_FILE"
 
 log_info "🎉 Bootstrap image build complete!"
