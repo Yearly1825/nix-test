@@ -71,6 +71,19 @@ nix build .#bootstrap-image \
   --show-trace
 ```
 
+## Requirements
+
+### Hardware Requirements
+- **Ethernet connection** - Required for bootstrap process
+- WiFi is disabled during bootstrap for security and reliability
+- SD card (16GB+ recommended)
+- Raspberry Pi 4 (2GB+ RAM recommended)
+
+### Network Requirements
+- DHCP-enabled ethernet network
+- Internet access for downloading packages
+- Access to discovery service IP
+
 ## Configuration
 
 ### Required Parameters
@@ -174,6 +187,9 @@ sudo dd if=result/nixos-sd-image-*.img of=/dev/sdX bs=4M status=progress sync
 # Start discovery service
 cd ../discovery-service
 docker-compose up -d
+
+# Boot Raspberry Pi with ETHERNET CONNECTED
+# WiFi is disabled during bootstrap - ethernet is required
 
 # Monitor logs
 docker-compose logs -f discovery-service
