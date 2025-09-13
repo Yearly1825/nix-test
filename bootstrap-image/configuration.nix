@@ -8,6 +8,12 @@
     };
     kernelModules = [ "bcm2835-v4l2" ];
     growPartition = true;
+    # Add these lines:
+    initrd.includeDefaultModules = false;
+    initrd.availableKernelModules = [
+      "mmc_block" "usbhid" "usb_storage" "uas"
+      "ext4" "crc32c"
+    ];
   };
   nix = {
     package = pkgs.nixVersions.stable;
