@@ -5,16 +5,16 @@
   networking = {
     hostName = "sensor";
     domain = "local";
-    
+
     # Use NetworkManager for network configuration
     networkmanager = {
       enable = true;
       wifi.backend = "iwd"; # Use iwd for better WiFi performance
     };
-    
+
     # Disable wpa_supplicant since we're using NetworkManager
     wireless.enable = false;
-    
+
     # Enable firewall with specific ports
     firewall = {
       enable = true;
@@ -33,34 +33,32 @@
     kismet
     aircrack-ng
     wireshark-cli
-    
+
     # GPS support
     gpsd
-    gpsd-clients
-    
+
     # VPN and networking
     wireguard-tools
     netbird
-    
+
     # System utilities
     rsync
     tmux
     screen
-    
+
     # Editors
     vim
     neovim
     nano
-    
+
     # Development tools
     git
-    gh
-    
+
     # System monitoring
     htop
     btop
     iotop
-    
+
     # Network tools
     curl
     wget
@@ -70,12 +68,12 @@
     iproute2
     dnsutils
     iperf3
-    
+
     # File management
     tree
     ncdu
     unzip
-    
+
     # Hardware tools
     usbutils
     pciutils
@@ -84,17 +82,18 @@
 
   # Enable services
   services = {
-    # Enable automatic updates
-    automatic-updates = {
-      enable = false; # Set to true for automatic updates
-      dates = "04:00";
-    };
-    
     # Enable time synchronization
     chrony.enable = true;
-    
-    # Enable hardware monitoring
-    smartd.enable = false; # Disable for SD cards
+
+    # OpenSSH is configured in ssh module
+    # Just ensure it's not double-configured here
+  };
+
+  # System auto-upgrade (correct option name)
+  system.autoUpgrade = {
+    enable = false; # Set to true if you want automatic updates
+    dates = "04:00";
+    randomizedDelaySec = "30min";
   };
 
   # Enable custom sensor modules
@@ -123,12 +122,10 @@
   users.users.sensor = {
     isNormalUser = true;
     description = "Sensor System User";
-    extraGroups = [ 
-      "wheel" 
-      "networkmanager" 
-      "dialout" 
-      "kismet" 
-      "wireshark"
+    extraGroups = [
+      "wheel"
+      "networkmanager"
+      "dialout"
       "video"
       "gpio"
       "i2c"
@@ -152,7 +149,7 @@
       extraConfig = ''
         # Allow sensor user to run specific commands without password
         sensor ALL=(ALL) NOPASSWD: ALL
-        
+
         # Security options
         Defaults requiretty
         Defaults !visiblepw
@@ -161,7 +158,7 @@
         Defaults secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
       '';
     };
-    
+
     # Enable polkit for privilege escalation
     polkit.enable = true;
   };
@@ -173,7 +170,7 @@
       experimental-features = [ "nix-command" "flakes" ];
       trusted-users = [ "sensor" "@wheel" ];
     };
-    
+
     # Garbage collection
     gc = {
       automatic = true;
