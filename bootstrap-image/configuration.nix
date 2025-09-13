@@ -1,28 +1,27 @@
 { config, pkgs, lib, ... }:
-
 {
-  # System version - important for compatibility
+  # System version - keep for compatibility
   system.stateVersion = "24.05";
-  
+
   # Basic boot configuration
   boot = {
     loader = {
       grub.enable = false;
       generic-extlinux-compatible.enable = true;
     };
-    # Kernel modules needed for Raspberry Pi
+    # Kernel modules for Raspberry Pi
     kernelModules = [ "bcm2835-v4l2" ];
+    # Ensure compatibility with sd-image-aarch64.nix
+    growPartition = true;
   };
 
-  # Enable flakes support (required for nixos-rebuild with flakes)
+  # Enable flakes support
   nix = {
-    package = pkgs.nixFlakes;
-    extraOptions = ''
-      experimental-features = nix-command flakes
-    '';
+    package = pkgs.nixVersions.stable; # Updated from nixFlakes
+    settings.experimental-features = [ "nix-command" "flakes" ];
   };
 
-  # Temporary hostname (will be replaced after registration)
+  # Temporary hostname
   networking.hostName = "pi-bootstrap";
 
   # Enable SSH for debugging
@@ -30,14 +29,14 @@
     enable = true;
     settings = {
       PermitRootLogin = "yes";
-      PasswordAuthentication = true;  # Only for bootstrap phase
+      PasswordAuthentication = true; # Only for bootstrap phase
     };
   };
 
   # Temporary root password - CHANGE THIS!
   users.users.root.initialPassword = "bootstrap";
 
-  # Essential packages for bootstrap process
+  # Essential packages
   environment.systemPackages = with pkgs; [
     git
     curl
@@ -48,24 +47,21 @@
     tmux
   ];
 
-  # Copy bootstrap script to system
+  # Copy bootstrap script
   environment.etc."bootstrap/bootstrap.sh" = {
     source = ./bootstrap.sh;
     mode = "0755";
   };
 
-  # Bootstrap service definition
+  # Bootstrap service
   systemd.services.pi-bootstrap = {
     description = "Raspberry Pi Bootstrap Process";
     wantedBy = [ "multi-user.target" ];
     after = [ "network-online.target" ];
     wants = [ "network-online.target" ];
-    
-    # Only run once - checks for marker file
     unitConfig = {
       ConditionPathExists = "!/var/lib/bootstrap-complete";
     };
-    
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
@@ -74,7 +70,6 @@
       Restart = "on-failure";
       RestartSec = "30s";
     };
-    
     script = ''
       echo "Starting bootstrap process..."
       /etc/bootstrap/bootstrap.sh
@@ -84,7 +79,4 @@
       systemctl reboot
     '';
   };
-
-  # Ensure system can expand filesystem on first boot
-  boot.growPartition = true;
 }
