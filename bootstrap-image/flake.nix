@@ -6,19 +6,24 @@
   };
 
   outputs = { self, nixpkgs }: let
-    system = "aarch64-linux";
+    # Support multiple host architectures for cross-compilation
+    supportedSystems = [ "x86_64-linux" "aarch64-linux" ];
+    targetSystem = "aarch64-linux";  # Always build for Raspberry Pi
+
+    # Helper function to generate packages for each supported system
+    forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
 
     # Function to create bootstrap image with custom parameters
     makeBootstrapImage = { discoveryPsk, discoveryServiceIp ? "192.168.1.100", configRepoUrl ? "github:yourusername/nixos-pi-configs" }:
       nixpkgs.lib.nixosSystem {
-        inherit system;
+        system = targetSystem;
         specialArgs = {
           inherit discoveryPsk discoveryServiceIp configRepoUrl;
         };
         modules = [
           "${nixpkgs}/nixos/modules/installer/sd-card/sd-image-aarch64.nix"
           {
-            nixpkgs.pkgs = nixpkgs.legacyPackages.${system};
+            nixpkgs.pkgs = nixpkgs.legacyPackages.${targetSystem};
           }
           ./configuration-updated.nix
           ./hardware-configuration.nix
@@ -32,51 +37,60 @@
       discoveryPsk = "CHANGE_ME_TO_YOUR_PSK";
     };
 
-    # Function to build with custom PSK
-    lib.buildBootstrapImage = makeBootstrapImage;
-
-    # Helper for building images
-    packages.${system} = {
-      default = self.nixosConfigurations.pi-bootstrap.config.system.build.sdImage;
-
-      # Function to build with custom args - usage in shell
-      buildWithPsk = nixpkgs.legacyPackages.${system}.writeShellScriptBin "build-bootstrap-image" ''
-        set -euo pipefail
-
-        PSK="''${1:-}"
-        IP="''${2:-192.168.1.100}"
-        REPO="''${3:-github:yourusername/nixos-pi-configs}"
-
-        if [ -z "$PSK" ]; then
-          echo "Usage: $0 <PSK> [IP] [REPO_URL]"
-          echo "Example: $0 abc123def456 192.168.1.100 github:myuser/my-configs"
-          exit 1
-        fi
-
-        echo "Building bootstrap image with:"
-        echo "  PSK: ''${PSK:0:8}..."
-        echo "  Discovery IP: $IP"
-        echo "  Config Repo: $REPO"
-
-        nix build .#nixosConfigurations.custom-bootstrap.config.system.build.sdImage \
-          --override-input nixpkgs nixpkgs \
-          --extra-experimental-features "nix-command flakes" \
-          --arg discoveryPsk "\"$PSK\"" \
-          --arg discoveryServiceIp "\"$IP\"" \
-          --arg configRepoUrl "\"$REPO\""
-      '';
-    };
-
-    # Custom bootstrap configuration with args
+    # Environment variable-based configuration for transparent builds
     nixosConfigurations.custom-bootstrap = makeBootstrapImage {
       discoveryPsk = builtins.getEnv "DISCOVERY_PSK";
       discoveryServiceIp = builtins.getEnv "DISCOVERY_SERVICE_IP";
       configRepoUrl = builtins.getEnv "CONFIG_REPO_URL";
     };
 
-    # Development shell with helpers
-    devShells.${system}.default = nixpkgs.legacyPackages.${system}.mkShell {
-      buildInputs = with nixpkgs.legacyPackages.${system}; [
+    # Function to build with custom PSK (programmatic access)
+    lib.buildBootstrapImage = makeBootstrapImage;
+
+    # Packages for all supported host systems (enables cross-compilation)
+    packages = forAllSystems (hostSystem: {
+      # Default image (uses custom-bootstrap with env vars)
+      default = self.nixosConfigurations.custom-bootstrap.config.system.build.sdImage;
+
+      # Direct access to image
+      bootstrap-image = self.nixosConfigurations.custom-bootstrap.config.system.build.sdImage;
+
+      # Build helper script (available on all host systems)
+      build-script = nixpkgs.legacyPackages.${hostSystem}.writeShellScriptBin "build-bootstrap" ''
+        set -euo pipefail
+
+        # Platform detection for cross-compilation
+        HOST_ARCH=$(uname -m)
+        CROSS_ARGS=""
+
+        case "$HOST_ARCH" in
+          x86_64)
+            echo "🔄 Cross-compiling from x86_64 to aarch64"
+            CROSS_ARGS="--system aarch64-linux --extra-platforms aarch64-linux"
+            ;;
+          aarch64|arm64)
+            echo "🏠 Native build on aarch64"
+            ;;
+          *)
+            echo "⚠️  Unknown architecture: $HOST_ARCH, attempting cross-compilation"
+            CROSS_ARGS="--system aarch64-linux --extra-platforms aarch64-linux"
+            ;;
+        esac
+
+        # Detect CachyOS and add stability flags
+        if [ -f /etc/os-release ] && grep -q "CachyOS" /etc/os-release; then
+          echo "🐧 CachyOS detected, adding stability flags"
+          CROSS_ARGS="$CROSS_ARGS --option sandbox false --max-jobs 1"
+        fi
+
+        echo "📦 Building with args: $CROSS_ARGS"
+        nix build .#bootstrap-image $CROSS_ARGS --show-trace "$@"
+      '';
+    });
+
+    # Development shells for all supported systems
+    devShells = forAllSystems (hostSystem: nixpkgs.legacyPackages.${hostSystem}.mkShell {
+      buildInputs = with nixpkgs.legacyPackages.${hostSystem}; [
         nixFlakes
         python3
         python3Packages.requests
@@ -86,22 +100,24 @@
       shellHook = ''
         echo "🚀 Bootstrap Image Development Environment"
         echo "========================================"
+        echo "Host System: ${hostSystem}"
+        echo "Target System: ${targetSystem}"
         echo ""
-        echo "Available commands:"
-        echo "  build-with-psk <PSK> [IP] [REPO] - Build image with custom parameters"
-        echo "  nix run ../discovery-service#generate-psk - Generate new PSK"
+        echo "📋 Available build methods:"
         echo ""
-        echo "Example usage:"
-        echo "  # Generate PSK"
-        echo "  python3 ../discovery-service/generate_psk.py"
+        echo "1️⃣  Build Script (recommended):"
+        echo "   ./build-image.sh -p <psk>"
         echo ""
-        echo "  # Build with PSK"
-        echo "  build-with-psk abc123def456789 192.168.1.100 github:myuser/my-configs"
+        echo "2️⃣  Direct Nix (full transparency):"
+        echo "   export DISCOVERY_PSK=<psk>"
+        echo "   nix run .#packages.${hostSystem}.build-script"
         echo ""
-
-        # Make build helper available
-        export PATH="${self.packages.${system}.buildWithPsk}/bin:$PATH"
+        echo "3️⃣  Manual Nix (complete control):"
+        echo "   nix build .#bootstrap-image --system aarch64-linux --extra-platforms aarch64-linux"
+        echo ""
+        echo "🔧 Cross-compilation will be handled automatically based on your platform."
+        echo ""
       '';
-    };
+    });
   };
 }
