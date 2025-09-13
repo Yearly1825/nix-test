@@ -10,6 +10,11 @@ This document provides transparent, copy-paste commands for building bootstrap i
 export DISCOVERY_PSK="your-64-char-hex-psk"
 export DISCOVERY_SERVICE_IP="192.168.1.100" 
 export CONFIG_REPO_URL="github:yourusername/nixos-pi-configs"
+
+# Verify environment variables are set
+echo "PSK: ${DISCOVERY_PSK:0:8}..."
+echo "IP: $DISCOVERY_SERVICE_IP"
+echo "Repo: $CONFIG_REPO_URL"
 ```
 
 ### Basic Build Commands

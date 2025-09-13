@@ -23,7 +23,7 @@ export DISCOVERY_SERVICE_IP="192.168.1.100"
 export CONFIG_REPO_URL="github:yourusername/nixos-pi-configs"
 
 # Build directly with nix
-nix build .#custom-bootstrap.config.system.build.sdImage --show-trace
+nix build .#bootstrap-image --show-trace
 ```
 
 ## Build Methods Comparison
