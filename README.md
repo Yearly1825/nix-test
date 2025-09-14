@@ -1,348 +1,248 @@
-# NixOS Raspberry Pi 4 Sensor System
+# NixOS Raspberry Pi Sensor System
 
 A complete NixOS configuration for deploying Raspberry Pi 4 devices as network sensors with Kismet wireless monitoring, Netbird VPN connectivity, and secure SSH access.
 
-## Features
+## 🎯 **Overview**
 
-- **Network Monitoring**: Kismet for WiFi analysis and packet capture
-- **Secure Connectivity**: Netbird VPN for secure remote access
-- **SSH Hardening**: Public key only authentication with fail2ban
-- **Automated Deployment**: Flake-based configuration management
-- **Security Tools**: Aircrack-ng, hcxdumptool, tcpdump, nmap, and more
-- **GPS Support**: Built-in gpsd configuration for location awareness
-- **Passwordless Sudo**: Configured for automation workflows
+This project provides a **zero-touch deployment system** for Raspberry Pi sensor fleets. Flash an SD card, boot with ethernet, and devices automatically:
 
-## Quick Start
+- Register with a discovery service
+- Receive unique hostnames (`SENSOR-01`, `SENSOR-02`, etc.)
+- Download and apply configurations from your Git repository
+- Join your VPN automatically
+- Begin monitoring tasks
 
-### Prerequisites
+## 🏗️ **Architecture**
 
-- Raspberry Pi 4 (2GB+ RAM recommended)
-- 16GB+ SD card
-- NixOS ARM image
-- Netbird account and setup key
-- SSH key pair
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Fresh Pi      │───▶│ Discovery       │───▶│ Your Config     │
+│   (Bootstrap)   │    │ Service         │    │ Repository      │
+│                 │    │                 │    │                 │
+│ • Ethernet only │    │ • PSK Auth      │    │ • NixOS Flake   │
+│ • Hardware ID   │    │ • Encrypted     │    │ • Sensor Configs│
+│ • Auto register │    │ • Sequential    │    │ • VPN Setup     │
+└─────────────────┘    │   Hostnames     │    └─────────────────┘
+                       │ • SSH Keys      │
+                       └─────────────────┘
+                               │
+                               ▼
+                    ┌─────────────────┐
+                    │ Configured      │
+                    │ Sensor Node     │
+                    │                 │
+                    │ • Kismet        │
+                    │ • Netbird VPN   │
+                    │ • SSH Hardened  │
+                    │ • Monitoring    │
+                    └─────────────────┘
+```
 
-### 1. Prepare SD Card
+## 📦 **Repository Structure**
+
+This repository contains three main components:
+
+```
+nix-sensor/
+├── 📁 discovery-service/     # Registration and configuration service
+│   ├── README.md            # Setup and deployment guide
+│   ├── app/                 # FastAPI application
+│   ├── config/              # Configuration templates
+│   └── docker-compose.yml   # Easy deployment
+│
+├── 📁 bootstrap-image/       # SD card image builder
+│   ├── README.md            # Build instructions and commands
+│   ├── build-image.sh       # Automated build script
+│   ├── flake.nix            # NixOS image definition
+│   └── configuration.nix    # Bootstrap system config
+│
+├── 📁 modules/               # NixOS sensor modules
+│   ├── kismet.nix           # Wireless monitoring
+│   ├── netbird.nix          # VPN connectivity
+│   └── ssh.nix              # Hardened SSH access
+│
+└── 📄 README.md             # This overview (you are here)
+```
+
+## 🚀 **Quick Start**
+
+### **Step 1: Deploy Discovery Service**
+
+The discovery service manages device registration and provides configuration:
 
 ```bash
-# Download NixOS ARM image
-wget https://hydra.nixos.org/build/latest/nixos-sd-image-24.05-aarch64-linux.img.zst
-
-# Flash to SD card (replace sdX with your device)
-zstd -d nixos-sd-image-*.img.zst
-sudo dd if=nixos-sd-image-*.img of=/dev/sdX bs=4M status=progress sync
+cd discovery-service/
+python3 generate_psk.py  # Generate secure keys
+# Edit config/config.yaml with your settings
+docker-compose up -d     # Start the service
 ```
 
-### 2. Initial Boot
+**📖 [Complete Discovery Service Setup →](discovery-service/README.md)**
 
-1. Insert SD card and power on Raspberry Pi
-2. Connect via ethernet or attach keyboard/monitor
-3. Login as `root` (no password initially)
+### **Step 2: Build Bootstrap Images**
 
-### 3. Deploy Configuration
+Create SD card images that automatically register with your discovery service:
 
 ```bash
-# Connect to network
-nmcli device wifi connect "YOUR_WIFI_SSID" password "YOUR_PASSWORD"
-
-# Download and run bootstrap
-curl -L https://raw.githubusercontent.com/yourusername/sensor-config/main/scripts/bootstrap.sh -o bootstrap.sh
-chmod +x bootstrap.sh
-
-# Deploy with your settings
-./bootstrap.sh \
-  "https://github.com/yourusername/sensor-config.git" \
-  "YOUR_NETBIRD_SETUP_KEY" \
-  "ssh-ed25519 AAAAC3... your-public-key"
-
-# Reboot
-reboot
+cd bootstrap-image/
+./build-image.sh -p <your-psk>  # Build with your PSK
 ```
 
-### 4. Access Your Sensor
+**📖 [Complete Build Instructions →](bootstrap-image/README.md)**
+
+### **Step 3: Flash and Deploy**
+
+Flash SD cards and deploy sensors:
 
 ```bash
-# SSH access (password: disabled, use your key)
-ssh sensor@<raspberry-pi-ip>
-
-# Kismet Web UI
-http://<raspberry-pi-ip>:2501
-# Default: kismet/changeme
-
-# Check VPN status
-sudo netbird status
+sudo dd if=result/nixos-sd-image-*.img of=/dev/sdX bs=4M status=progress
+# Insert SD card in Pi, connect ethernet, power on
+# Watch discovery service logs for registration
 ```
 
-## Configuration Structure
+## ✨ **Key Features**
 
-```
-.
-├── flake.nix                 # Flake definition
-├── configuration.nix         # Main system configuration
-├── hardware-configuration.nix # Hardware-specific settings
-├── modules/
-│   ├── ssh.nix              # SSH hardening and fail2ban
-│   ├── netbird.nix          # Netbird VPN client
-│   └── kismet.nix           # Kismet wireless monitoring
-├── secrets/                  # Git-ignored secrets
-└── scripts/
-    ├── bootstrap.sh         # Initial deployment
-    └── update.sh           # Configuration updates
-```
+### **🔐 Security-First Design**
+- **PSK Authentication**: Pre-shared keys burned into images
+- **Encrypted Payloads**: AES-256-GCM for sensitive configuration
+- **SSH Hardening**: Public key only, fail2ban protection
+- **VPN-First**: All sensors join secure Netbird VPN
 
-## Key Components
+### **📡 Network Monitoring**
+- **Kismet**: Professional wireless packet analysis
+- **GPS Integration**: Location-aware monitoring
+- **Multiple Formats**: PCAPNG, CSV, JSON output
+- **Web Interface**: Real-time monitoring dashboard
 
-### Network Monitoring (Kismet)
+### **⚙️ Automated Management**
+- **Zero-Touch Deploy**: Flash, boot, done
+- **Sequential Naming**: Automatic hostname assignment
+- **Config Management**: Git-based configuration
+- **Remote Updates**: NixOS declarative rebuilds
 
-- Automatic channel hopping on 2.4GHz
-- Web interface on port 2501
-- GPS integration for location tagging
-- Packet capture in PCAPNG format
-- Alert detection for common attacks
+### **🔄 Scalable Architecture**
+- **Horizontal Scaling**: Add Pis without config changes
+- **Centralized Control**: Single discovery service
+- **Stateless Nodes**: Identical, replaceable sensors
+- **Rolling Updates**: Update all nodes from Git
 
-### VPN Connectivity (Netbird)
+## 📋 **Requirements**
 
-- Zero-config WireGuard-based VPN
-- Automatic reconnection
-- Management through Netbird cloud
-- Secure peer-to-peer connectivity
+### **Discovery Service Host**
+- Linux system with Docker
+- Network accessible to sensors
+- ~100MB RAM, minimal CPU
 
-### Security Features
+### **Build Machine** 
+- Nix package manager
+- 8GB+ free disk space
+- SD card reader
 
-- SSH public key only authentication
-- Fail2ban with progressive ban times
-- Firewall with minimal open ports
-- Passwordless sudo for automation
-- Disabled root password login
+### **Target Hardware**
+- Raspberry Pi 4 (2GB+ RAM)
+- 16GB+ SD cards
+- Ethernet connection (required for bootstrap)
 
-## Customization
+## 📚 **Documentation**
 
-### Adding SSH Keys
+### **Component Guides**
+- **[Discovery Service Setup](discovery-service/README.md)** - FastAPI service deployment and configuration
+- **[Bootstrap Image Builder](bootstrap-image/README.md)** - SD card image creation and commands
+- **[Direct Build Commands](bootstrap-image/COMMANDS.md)** - Transparent build command reference
 
-Edit `configuration.nix`:
-```nix
-users.users.sensor = {
-  openssh.authorizedKeys.keys = [
-    "ssh-ed25519 AAAAC3... user1@host"
-    "ssh-rsa AAAAB3... user2@host"
-  ];
-};
-```
+### **Configuration**
+- **[Sensor Configuration](modules/)** - NixOS modules for Kismet, VPN, and SSH
+- **[Network Configuration](bootstrap-image/network-config.nix)** - Ethernet-only bootstrap networking
+- **[Hardware Support](bootstrap-image/hardware-configuration.nix)** - Raspberry Pi hardware settings
 
-### Changing Network Interfaces
+## 🔧 **Development Workflow**
 
-Edit `modules/kismet.nix`:
-```nix
-services.sensorKismet = {
-  interface = "wlan1";  # Change from wlan0
-};
-```
-
-### Modifying Firewall Rules
-
-Edit `configuration.nix`:
-```nix
-networking.firewall = {
-  allowedTCPPorts = [ 22 2501 3000 ];  # Add ports
-  allowedUDPPorts = [ 51820 ];
-};
-```
-
-## Maintenance
-
-### Update Configuration
-
+### **Initial Setup**
 ```bash
-# On the sensor
-cd /etc/nixos
-sudo ./scripts/update.sh
+# 1. Clone repository
+git clone <your-repo-url>
+cd nix-sensor
 
-# Or remotely
-ssh sensor@<ip> "cd /etc/nixos && sudo ./scripts/update.sh"
+# 2. Generate discovery service keys
+cd discovery-service && python3 generate_psk.py
+
+# 3. Configure discovery service
+vim config/config.yaml  # Add your settings
+
+# 4. Start discovery service
+docker-compose up -d
+
+# 5. Build bootstrap image
+cd ../bootstrap-image
+./build-image.sh -p <your-psk>
 ```
 
-### System Updates
-
+### **Sensor Deployment**
 ```bash
-# Update NixOS channel
-sudo nix-channel --update
+# Flash SD card
+sudo dd if=result/*.img of=/dev/sdX bs=4M status=progress
 
-# Rebuild with updates
-sudo nixos-rebuild switch --upgrade
+# Monitor registration
+cd ../discovery-service
+docker-compose logs -f
 ```
 
-### Garbage Collection
-
+### **Configuration Updates**
 ```bash
-# Remove old generations
-sudo nix-collect-garbage -d
+# Update your sensor config repository
+git push origin main
 
-# Keep last 3 generations
-sudo nix-env --delete-generations +3
+# Sensors will pull updates on next rebuild
+# Or trigger remote rebuild via SSH
 ```
 
-## Monitoring
+## 🛠️ **Troubleshooting**
 
-### Service Status
-
-```bash
-# Check all sensor services
-systemctl status sshd netbird kismet
-
-# View logs
-journalctl -u netbird -f
-journalctl -u kismet -f
-```
-
-### Network Status
-
-```bash
-# VPN status
-sudo netbird status
-
-# WiFi interfaces
-iw dev
-ip link show
-
-# Monitor mode check
-iw dev wlan0 info
-```
-
-### Resource Usage
-
-```bash
-# System resources
-htop
-
-# Disk usage
-df -h
-ncdu /
-
-# Network traffic
-iftop
-```
-
-## Troubleshooting
-
-### Common Issues
+### **Common Issues**
 
 | Problem | Solution |
 |---------|----------|
-| Can't SSH | Check firewall, verify key, check fail2ban |
-| Netbird not connecting | Verify setup key, check management URL |
-| Kismet not starting | Check WiFi interface exists, verify monitor mode support |
-| Build fails | Run with `--show-trace`, check disk space |
-| WiFi not working | Check NetworkManager status, verify drivers |
+| Pi not registering | Check ethernet connection and discovery service logs |
+| Build fails | See [build troubleshooting](bootstrap-image/README.md#troubleshooting) |
+| Network timeout | Verify DHCP and internet connectivity |
+| PSK errors | Regenerate PSK and rebuild images |
 
-### Debug Commands
-
-```bash
-# System logs
-journalctl -xe
-
-# Network debugging
-nmcli device status
-ip addr show
-ping 8.8.8.8
-
-# Service debugging
-systemctl status <service>
-journalctl -u <service> --since "5 minutes ago"
-
-# Configuration validation
-nixos-rebuild dry-build
-```
-
-## Security Considerations
-
-⚠️ **Important Security Steps**:
-
-1. **Change default passwords**:
-   - Kismet web interface password
-   - Any service credentials
-
-2. **Review firewall rules**:
-   - Only open required ports
-   - Use VPN for remote access when possible
-
-3. **Keep system updated**:
-   - Regular NixOS updates
-   - Monitor security advisories
-
-4. **Audit access**:
-   - Review SSH keys periodically
-   - Check fail2ban logs
-   - Monitor login attempts
-
-## Advanced Usage
-
-### Custom Modules
-
-Create new module in `modules/`:
-```nix
-{ config, lib, pkgs, ... }:
-{
-  options.services.myService = {
-    enable = lib.mkEnableOption "My custom service";
-  };
-
-  config = lib.mkIf config.services.myService.enable {
-    # Service configuration
-  };
-}
-```
-
-### Multiple Sensors
-
-Deploy fleet with different hostnames:
-```nix
-# In configuration.nix
-networking.hostName = "sensor-${location}";
-```
-
-### Integration Examples
+### **Debug Commands**
 
 ```bash
-# Stream Kismet data to central server
-kismet_client -c <sensor-ip>:2501
+# Check discovery service status
+curl http://<discovery-ip>:8080/health
 
-# Sync captures to central storage
-rsync -av sensor@<ip>:/var/lib/kismet/*.pcapng ./captures/
+# Monitor sensor bootstrap (via SSH)
+ssh root@<sensor-ip>  # password: bootstrap
+journalctl -f -u pi-bootstrap
 
-# Aggregate logs with Vector/Loki
-vector --config /etc/vector/sensor.toml
+# View discovery service logs
+docker-compose logs -f discovery-service
 ```
 
-## Contributing
+## 🤝 **Contributing**
+
+Contributions welcome! Please:
 
 1. Fork the repository
-2. Create feature branch
+2. Create a feature branch
 3. Test on actual hardware
-4. Submit pull request
+4. Submit a pull request
 
-## License
+## 📄 **License**
 
-MIT License - See LICENSE file
+MIT License - see [LICENSE](LICENSE) file for details.
 
-## Support
+## 🙏 **Acknowledgments**
 
-- Issues: [GitHub Issues](https://github.com/yourusername/sensor-config/issues)
-- Documentation: [Wiki](https://github.com/yourusername/sensor-config/wiki)
-- Community: [Discussions](https://github.com/yourusername/sensor-config/discussions)
-
-## Acknowledgments
-
-- NixOS community for ARM support
-- Kismet developers for wireless monitoring tools
-- Netbird team for excellent VPN solution
+- **[NixOS](https://nixos.org/)** - Declarative system configuration
+- **[Kismet](https://www.kismetwireless.net/)** - Wireless network monitoring
+- **[Netbird](https://netbird.io/)** - Modern VPN solution
+- **Raspberry Pi Foundation** - Amazing hardware platform
 
 ---
 
-**Note**: Remember to replace placeholder values:
-- Repository URLs
-- Netbird setup keys
-- SSH public keys
-- Default passwords
-- Network SSIDs
+**💡 Pro Tip**: Start with the [Discovery Service README](discovery-service/README.md) for your first deployment, then move to [Bootstrap Image Builder](bootstrap-image/README.md) for creating SD card images.
 
-Stay secure! 🔒
+**🔒 Security Note**: This system is designed for legitimate security research and network monitoring. Ensure compliance with local laws and obtain proper authorization before monitoring wireless networks.
