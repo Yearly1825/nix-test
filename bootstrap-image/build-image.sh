@@ -138,10 +138,10 @@ if nix build .#bootstrap-image --out-link "$OUTPUT_DIR" $CROSS_ARGS --show-trace
     # Get the actual image path
     IMAGE_PATH=$(readlink -f "$OUTPUT_DIR")
 
-    # Look for image file in sd-image subdirectory first, then fallback to root
-    IMAGE_FILE=$(find "$IMAGE_PATH/sd-image" -name "*.img" 2>/dev/null | head -1)
+    # Look for image file (compressed or uncompressed) in sd-image subdirectory first, then fallback to root
+    IMAGE_FILE=$(find "$IMAGE_PATH/sd-image" -name "*.img.zst" -o -name "*.img" 2>/dev/null | head -1)
     if [ -z "$IMAGE_FILE" ]; then
-        IMAGE_FILE=$(find "$IMAGE_PATH" -name "*.img" | head -1)
+        IMAGE_FILE=$(find "$IMAGE_PATH" -name "*.img.zst" -o -name "*.img" | head -1)
     fi
 
     if [ -n "$IMAGE_FILE" ]; then
@@ -150,7 +150,13 @@ if nix build .#bootstrap-image --out-link "$OUTPUT_DIR" $CROSS_ARGS --show-trace
         log_info "📏 Image size: $IMAGE_SIZE"
         log_info ""
         log_info "🎯 Next steps:"
-        log_info "  1. Flash to SD card: sudo dd if='$IMAGE_FILE' of=/dev/sdX bs=4M status=progress"
+        if [[ "$IMAGE_FILE" == *.zst ]]; then
+            log_info "  1. Flash compressed image to SD card:"
+            log_info "     zstd -d '$IMAGE_FILE' --stdout | sudo dd of=/dev/sdX bs=4M status=progress"
+            log_info "     OR decompress first: zstd -d '$IMAGE_FILE'"
+        else
+            log_info "  1. Flash to SD card: sudo dd if='$IMAGE_FILE' of=/dev/sdX bs=4M status=progress"
+        fi
         log_info "  2. Boot Raspberry Pi with ethernet connected"
         log_info "  3. Monitor discovery service logs for registration"
         log_info ""
