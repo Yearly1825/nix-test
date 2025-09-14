@@ -5,8 +5,8 @@ set -euo pipefail
 
 # Default values
 DISCOVERY_PSK=""
-DISCOVERY_SERVICE_IP="192.168.1.100"
-CONFIG_REPO_URL="github:yourusername/nixos-pi-configs"
+DISCOVERY_SERVICE_IP="10.42.0.1"
+CONFIG_REPO_URL="github:yearly1825/nixos-pi-configs"
 OUTPUT_DIR="./result"
 
 # Color output
@@ -137,7 +137,12 @@ if nix build .#bootstrap-image --out-link "$OUTPUT_DIR" $CROSS_ARGS --show-trace
 
     # Get the actual image path
     IMAGE_PATH=$(readlink -f "$OUTPUT_DIR")
-    IMAGE_FILE=$(find "$IMAGE_PATH" -name "*.img" | head -1)
+
+    # Look for image file in sd-image subdirectory first, then fallback to root
+    IMAGE_FILE=$(find "$IMAGE_PATH/sd-image" -name "*.img" 2>/dev/null | head -1)
+    if [ -z "$IMAGE_FILE" ]; then
+        IMAGE_FILE=$(find "$IMAGE_PATH" -name "*.img" | head -1)
+    fi
 
     if [ -n "$IMAGE_FILE" ]; then
         IMAGE_SIZE=$(du -h "$IMAGE_FILE" | cut -f1)
