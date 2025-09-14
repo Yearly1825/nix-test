@@ -40,7 +40,7 @@
 
   users.users.root.initialPassword = "bootstrap";
 
-  # UPDATED: Add Python dependencies for discovery service
+  # UPDATED: Add Python dependencies for discovery service and pre-install sensor tools
   environment.systemPackages = with pkgs; [
     git
     curl
@@ -54,6 +54,24 @@
     python3Packages.requests
     python3Packages.cryptography
     python3Packages.pip
+
+    # Pre-installed network monitoring tools (speeds up bootstrap)
+    kismet
+    aircrack-ng
+    hcxdumptool
+    hcxtools
+    tcpdump
+    wireshark-cli  # provides tshark
+    nmap
+    iftop
+    netcat-gnu
+
+    # GPS support
+    gpsd
+
+    # Additional system tools
+    iotop
+    nethogs
   ];
 
   # UPDATED: Create bootstrap script with injected PSK

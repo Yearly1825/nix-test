@@ -56,11 +56,21 @@ nix-sensor/
 │   ├── flake.nix            # NixOS image definition
 │   └── configuration.nix    # Bootstrap system config
 │
-├── 📁 modules/               # NixOS sensor modules
-│   ├── kismet.nix           # Wireless monitoring
-│   ├── netbird.nix          # VPN connectivity
-│   └── ssh.nix              # Hardened SSH access
+├── 📁 sensor-template/       # Sensor configuration templates
+│   ├── README.md            # Usage and customization guide
+│   ├── flake.nix            # Profile-based configurations
+│   ├── profiles/            # Different sensor configurations
+│   │   ├── full-sensor.nix  # Complete monitoring stack
+│   │   ├── wireless-monitor.nix  # Wireless monitoring only
+│   │   └── minimal.nix      # Basic connectivity
+│   ├── base/                # Shared configuration
+│   └── modules/             # NixOS sensor modules
+│       ├── kismet.nix       # Wireless monitoring
+│       ├── netbird.nix      # VPN connectivity
+│       └── ssh.nix          # Hardened SSH access
 │
+├── 📁 scripts/              # Deployment helper scripts
+├── 📁 docs/                 # Extended documentation
 └── 📄 README.md             # This overview (you are here)
 ```
 
@@ -149,11 +159,20 @@ sudo dd if=result/nixos-sd-image-*.img of=/dev/sdX bs=4M status=progress
 - **[Discovery Service Setup](discovery-service/README.md)** - FastAPI service deployment and configuration
 - **[Bootstrap Image Builder](bootstrap-image/README.md)** - SD card image creation and commands
 - **[Direct Build Commands](bootstrap-image/COMMANDS.md)** - Transparent build command reference
+- **[Sensor Templates](sensor-template/README.md)** - Configuration profiles and customization
 
-### **Configuration**
-- **[Sensor Configuration](modules/)** - NixOS modules for Kismet, VPN, and SSH
+### **Configuration Reference**
+- **[Sensor Profiles](sensor-template/profiles/)** - Pre-built sensor configurations
+  - `full-sensor.nix` - Complete monitoring stack with all tools
+  - `wireless-monitor.nix` - Lightweight wireless monitoring
+  - `minimal.nix` - Basic connectivity only
+- **[NixOS Modules](sensor-template/modules/)** - Kismet, VPN, and SSH configurations
 - **[Network Configuration](bootstrap-image/network-config.nix)** - Ethernet-only bootstrap networking
 - **[Hardware Support](bootstrap-image/hardware-configuration.nix)** - Raspberry Pi hardware settings
+
+### **Extended Documentation**
+- **[Scripts](scripts/README.md)** - Deployment automation helpers
+- **[Documentation Hub](docs/README.md)** - Extended guides and references
 
 ## 🔧 **Development Workflow**
 
