@@ -190,21 +190,10 @@
       from pathlib import Path
       from typing import Dict, Any
 
-      try:
-          import requests
-      except ImportError:
-          subprocess.run([sys.executable, "-m", "pip", "install", "requests"], check=True)
-          import requests
-
-      try:
-          from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-          from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
-          from cryptography.hazmat.primitives import hashes
-      except ImportError:
-          subprocess.run([sys.executable, "-m", "pip", "install", "cryptography"], check=True)
-          from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-          from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
-          from cryptography.hazmat.primitives import hashes
+      import requests
+      from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+      from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
+      from cryptography.hazmat.primitives import hashes
 
       class BootstrapClient:
           def __init__(self, server_url: str, psk: str):
@@ -559,7 +548,10 @@
       StandardOutput = "journal+console";
       StandardError = "journal+console";
       TimeoutStartSec = "600";  # 10 minute timeout
-      # Script handles its own retries and error recovery
+      Environment = [
+        "PATH=/run/current-system/sw/bin:/nix/var/nix/profiles/default/bin"
+        "PYTHONPATH=${pkgs.python3Packages.requests}/lib/python3.11/site-packages:${pkgs.python3Packages.cryptography}/lib/python3.11/site-packages"
+      ];
     };
     script = ''
       echo "Starting enhanced discovery bootstrap process..."
