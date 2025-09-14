@@ -9,6 +9,7 @@
     nixosConfigurations.sensor = nixpkgs.lib.nixosSystem {
       system = "aarch64-linux";
       modules = [
+        ./hardware-configuration.nix
         {
           # Basic system configuration
           system.stateVersion = "24.05";

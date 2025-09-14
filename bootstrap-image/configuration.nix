@@ -531,6 +531,7 @@
               --flake "''${CONFIG_REPO_URL}#''${CONFIG_FLAKE_TARGET}" \
               --option substituters "https://cache.nixos.org" \
               --option trusted-public-keys "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=" \
+              --no-write-lock-file \
               --show-trace; then
 
               log_info "✅ NixOS configuration applied successfully"
