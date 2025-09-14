@@ -77,3 +77,6 @@
     publish.addresses = true;
   };
 }
+    UseDHCP
+    Enableon      eth0.useDHCP = true;
+      end0.useDHCP = true;  # Some Pi models use this interface name
