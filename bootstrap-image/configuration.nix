@@ -147,6 +147,51 @@
           done
       }
 
+      sync_time() {
+          log_info "Synchronizing system time..."
+
+          # Try NTP sync first if available
+          if systemctl is-active --quiet systemd-timesyncd; then
+              log_info "Attempting NTP synchronization..."
+              # Give NTP a chance to sync (up to 30 seconds)
+              local ntp_attempts=0
+              while [ $ntp_attempts -lt 6 ]; do
+                  if timedatectl status | grep -q "System clock synchronized: yes"; then
+                      log_info "NTP synchronization successful"
+                      return 0
+                  fi
+                  sleep 5
+                  ntp_attempts=$((ntp_attempts + 1))
+              done
+              log_warn "NTP synchronization timed out"
+          fi
+
+          # Fallback: Get time from discovery service
+          log_info "Attempting time sync from discovery service..."
+          if curl -s --max-time 10 "http://''${DISCOVERY_SERVICE_IP}:''${DISCOVERY_SERVICE_PORT}/health" >/dev/null 2>&1; then
+              # Get current time from HTTP Date header
+              local server_date=$(curl -s -I --max-time 5 "http://''${DISCOVERY_SERVICE_IP}:''${DISCOVERY_SERVICE_PORT}/health" | grep -i '^date:' | cut -d' ' -f2-)
+              if [ -n "$server_date" ]; then
+                  if date -s "$server_date" >/dev/null 2>&1; then
+                      log_info "Time synchronized from discovery service: $(date)"
+                      return 0
+                  fi
+              fi
+          fi
+
+          # Last resort: Set a reasonable time if we're way off
+          local current_timestamp=$(date +%s)
+          local year_2024_timestamp=1704067200  # Jan 1, 2024
+
+          if [ $current_timestamp -lt $year_2024_timestamp ]; then
+              log_warn "System time appears to be before 2024, setting to reasonable default"
+              date -s "2025-09-14 12:00:00" >/dev/null 2>&1
+              log_info "Time set to: $(date)"
+          else
+              log_info "System time appears reasonable: $(date)"
+          fi
+      }
+
       # ========================================
       # Discovery service integration
       # ========================================
@@ -438,6 +483,9 @@
               exit 1
           fi
 
+          # Synchronize system time
+          sync_time
+
           # Call discovery service
           log_info "📡 Registering with discovery service..."
           for attempt in $(seq 1 $MAX_RETRIES); do
@@ -550,7 +598,7 @@
       TimeoutStartSec = "600";  # 10 minute timeout
       Environment = [
         "PATH=/run/current-system/sw/bin:/nix/var/nix/profiles/default/bin"
-        "PYTHONPATH=${pkgs.python3Packages.requests}/lib/python3.11/site-packages:${pkgs.python3Packages.cryptography}/lib/python3.11/site-packages"
+        "PYTHONPATH=/run/current-system/sw/lib/python3.11/site-packages:${pkgs.python3Packages.requests}/lib/python3.11/site-packages:${pkgs.python3Packages.urllib3}/lib/python3.11/site-packages:${pkgs.python3Packages.charset-normalizer}/lib/python3.11/site-packages:${pkgs.python3Packages.certifi}/lib/python3.11/site-packages:${pkgs.python3Packages.idna}/lib/python3.11/site-packages:${pkgs.python3Packages.cryptography}/lib/python3.11/site-packages:${pkgs.python3Packages.cffi}/lib/python3.11/site-packages"
       ];
     };
     script = ''
