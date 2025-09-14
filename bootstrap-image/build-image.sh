@@ -141,7 +141,7 @@ if nix build --expr "
       discoveryServiceIp = \"$DISCOVERY_SERVICE_IP\";
       configRepoUrl = \"$CONFIG_REPO_URL\";
     }).config.system.build.sdImage
-" --out-link "$OUTPUT_DIR" $CROSS_ARGS --show-trace; then
+" --out-link "$OUTPUT_DIR" $CROSS_ARGS --show-trace --impure; then
     log_info "✅ Build completed successfully!"
 
     # Get the actual image path
