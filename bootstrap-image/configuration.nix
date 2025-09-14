@@ -77,7 +77,7 @@
   # UPDATED: Create bootstrap script with injected PSK
   environment.etc."bootstrap/bootstrap.sh" = {
     text = ''
-      #!/usr/bin/env bash
+      #!${pkgs.bash}/bin/bash
       set -euo pipefail
 
       # ========================================
