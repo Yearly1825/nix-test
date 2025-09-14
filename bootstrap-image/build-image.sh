@@ -153,7 +153,6 @@ if nix build .#bootstrap-image --out-link "$OUTPUT_DIR" $CROSS_ARGS --show-trace
         if [[ "$IMAGE_FILE" == *.zst ]]; then
             log_info "  1. Flash compressed image to SD card:"
             log_info "     zstd -d '$IMAGE_FILE' --stdout | sudo dd of=/dev/sdX bs=4M status=progress"
-            log_info "     OR decompress first: zstd -d '$IMAGE_FILE'"
         else
             log_info "  1. Flash to SD card: sudo dd if='$IMAGE_FILE' of=/dev/sdX bs=4M status=progress"
         fi
