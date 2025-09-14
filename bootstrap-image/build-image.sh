@@ -130,9 +130,18 @@ elif [ -f /etc/os-release ] && grep -q -i "arch" /etc/os-release; then
     # Add any arch-specific optimizations if needed
 fi
 
-# Build the image
+# Build the image using nix build with inline expression
 log_info "Starting build process with args: $CROSS_ARGS"
-if nix build .#bootstrap-image --out-link "$OUTPUT_DIR" $CROSS_ARGS --show-trace; then
+if nix build --expr "
+  let
+    flake = builtins.getFlake (toString ./.);
+  in
+    (flake.lib.buildBootstrapImage {
+      discoveryPsk = \"$DISCOVERY_PSK\";
+      discoveryServiceIp = \"$DISCOVERY_SERVICE_IP\";
+      configRepoUrl = \"$CONFIG_REPO_URL\";
+    }).config.system.build.sdImage
+" --out-link "$OUTPUT_DIR" $CROSS_ARGS --show-trace; then
     log_info "✅ Build completed successfully!"
 
     # Get the actual image path

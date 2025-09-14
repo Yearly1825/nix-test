@@ -6,6 +6,10 @@
   };
 
   outputs = { self, nixpkgs }: let
+    # Default values
+    defaultPsk = builtins.getEnv "DISCOVERY_PSK";
+    defaultIp = if builtins.getEnv "DISCOVERY_SERVICE_IP" != "" then builtins.getEnv "DISCOVERY_SERVICE_IP" else "10.42.0.1";
+    defaultRepo = if builtins.getEnv "CONFIG_REPO_URL" != "" then builtins.getEnv "CONFIG_REPO_URL" else "github:yearly1825/nixos-pi-configs";
     # Support multiple host architectures for cross-compilation
     supportedSystems = [ "x86_64-linux" "aarch64-linux" ];
     targetSystem = "aarch64-linux";  # Always build for Raspberry Pi
@@ -39,9 +43,9 @@
 
     # Environment variable-based configuration for transparent builds
     nixosConfigurations.custom-bootstrap = makeBootstrapImage {
-      discoveryPsk = builtins.getEnv "DISCOVERY_PSK";
-      discoveryServiceIp = builtins.getEnv "DISCOVERY_SERVICE_IP";
-      configRepoUrl = builtins.getEnv "CONFIG_REPO_URL";
+      discoveryPsk = defaultPsk;
+      discoveryServiceIp = defaultIp;
+      configRepoUrl = defaultRepo;
     };
 
     # Function to build with custom PSK (programmatic access)
