@@ -254,7 +254,7 @@
 
           def _derive_device_key(self, device_serial: str):
               salt = device_serial.encode().ljust(32, b'\x00')[:32]
-              kdf = Scrypt(algorithm=hashes.SHA256(), length=32, salt=salt, n=2**14, r=8, p=1)
+              kdf = Scrypt(length=32, salt=salt, n=2**14, r=8, p=1)
               return kdf.derive(self.psk)
 
           def _decrypt_payload(self, encrypted_data: str, device_serial: str):
