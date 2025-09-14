@@ -53,7 +53,6 @@ class SecurityManager:
         salt = device_serial.encode().ljust(salt_size, b'\x00')[:salt_size]
 
         kdf = Scrypt(
-            algorithm=hashes.SHA256(),
             length=32,  # AES-256 key size
             salt=salt,
             n=2**14,    # CPU/memory cost
