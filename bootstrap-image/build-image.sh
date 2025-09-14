@@ -157,7 +157,7 @@ if nix build .#bootstrap-image --out-link "$OUTPUT_DIR" $CROSS_ARGS --show-trace
             log_info "  1. Flash to SD card: sudo dd if='$IMAGE_FILE' of=/dev/sdX bs=4M status=progress"
         fi
         log_info "  2. Boot Raspberry Pi with ethernet connected"
-        log_info "  3. Monitor discovery service logs for registration"
+        log_info "  3. Monitor discovery service logs for registration: sudo docker compose logs -f discovery-service"
         log_info ""
         log_info "💡 Security reminder: This image contains your PSK!"
     else
