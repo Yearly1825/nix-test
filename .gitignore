@@ -6,6 +6,7 @@ result-*
 # Secrets
 secrets/*
 !secrets/.gitignore
+discovery-service/config/config.yaml
 
 # Hardware-specific
 hardware-configuration.nix.local
