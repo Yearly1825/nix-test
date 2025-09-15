@@ -66,10 +66,8 @@
           # Limit number of generations to keep boot partition clean (matching bootstrap)
           boot.loader.generic-extlinux-compatible.configurationLimit = 3;
 
-          # Set hostname from environment variable
-          networking.hostName =
-            let envHostname = builtins.getEnv "ASSIGNED_HOSTNAME";
-            in if envHostname != "" then envHostname else "test-sensor";
+          # Set static hostname for now (can be customized later)
+          networking.hostName = "test-sensor";
 
           # Enable SSH
           services.openssh = {
