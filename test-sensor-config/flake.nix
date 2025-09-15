@@ -10,6 +10,13 @@
       system = "aarch64-linux";
       modules = [
         {
+          # Add this at the top level (matching bootstrap)
+          nixpkgs.overlays = [(final: prev: {
+            makeModulesClosure = x: prev.makeModulesClosure (x // {
+              allowMissing = true;
+            });
+          })];
+
           # Disable problematic assertions
           assertions = nixpkgs.lib.mkForce [];
 
@@ -28,14 +35,39 @@
             fsType = "vfat";
           };
 
-          # Boot configuration
+          # Boot configuration (matching bootstrap exactly)
           boot = {
             loader = {
               grub.enable = false;
               generic-extlinux-compatible.enable = true;
             };
-            kernelPackages = nixpkgs.legacyPackages.aarch64-linux.linuxPackages_rpi4;
+            kernelModules = [ "bcm2835-v4l2" ];
+            growPartition = true;
+            # Add these lines (matching bootstrap):
+            initrd.includeDefaultModules = false;
+            initrd.availableKernelModules = [
+              "mmc_block" "usbhid" "usb_storage" "uas"
+              "ext4" "crc32c"
+            ];
           };
+
+          # SD image configuration (matching bootstrap)
+          sdImage.firmwareSize = 200;  # Doubles boot partition size safely
+
+          # Nix configuration (matching bootstrap)
+          nix = {
+            package = nixpkgs.legacyPackages.aarch64-linux.nixVersions.stable;
+            settings.experimental-features = [ "nix-command" "flakes" ];
+            # Automatic garbage collection to prevent boot partition filling up
+            gc = {
+              automatic = true;
+              dates = "weekly";
+              options = "--delete-older-than 7d";
+            };
+          };
+
+          # Limit number of generations to keep boot partition clean (matching bootstrap)
+          boot.loader.generic-extlinux-compatible.configurationLimit = 3;
 
           # Set hostname from environment variable
           networking.hostName =
@@ -51,8 +83,8 @@
             };
           };
 
-          # Set root password
-          users.users.root.initialPassword = "sensor";
+          # Set root password (matching bootstrap)
+          users.users.root.initialPassword = "bootstrap";
 
           # Enable NetworkManager
           networking.networkmanager.enable = true;

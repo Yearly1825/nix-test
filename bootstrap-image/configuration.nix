@@ -522,9 +522,8 @@
           log_info "🔐 Netbird setup key received"
           log_info "🗝️  SSH keys: $SSH_KEYS_COUNT key(s)"
 
-          # Set hostname
-          log_info "⚙️  Setting hostname to: $HOSTNAME"
-          hostnamectl set-hostname "$HOSTNAME"
+          # Note: Hostname will be set by NixOS configuration, not hostnamectl
+          log_info "⚙️  Hostname will be set to: $HOSTNAME (via NixOS config)"
 
           # Setup SSH keys
           setup_ssh_keys
@@ -539,8 +538,8 @@
           # Check disk space before nixos-rebuild
           df -h > /var/log/bootstrap-disk-before.log 2>&1
 
-          log_info "💾 Disk space before rebuild: $(df -h / | tail -1 | awk '{print $4}' available)"
-          log_info "💾 Boot space before rebuild: $(df -h /boot | tail -1 | awk '{print $4}' available)"
+          log_info "💾 Disk space before rebuild: $(df -h / | tail -1 | awk '{print $4 " available"}')"
+          log_info "💾 Boot space before rebuild: $(df -h /boot | tail -1 | awk '{print $4 " available"}')"
 
           if nixos-rebuild switch \
               --flake "''${CONFIG_REPO_URL}#''${CONFIG_FLAKE_TARGET}" \
