@@ -91,9 +91,10 @@
               Type = "oneshot";
               RemainAfterExit = true;
             };
+            path = with nixpkgs.legacyPackages.aarch64-linux; [ coreutils nettools gawk procps python3 ];
             script = ''
               echo "=== Bootstrap configuration applied successfully! ===" > /var/log/bootstrap-test.log
-              echo "Hostname: $(hostname)" >> /var/log/bootstrap-test.log
+              echo "Hostname: $(cat /proc/sys/kernel/hostname)" >> /var/log/bootstrap-test.log
               echo "Time: $(date)" >> /var/log/bootstrap-test.log
               echo "Netbird setup key: $NETBIRD_SETUP_KEY" >> /var/log/bootstrap-test.log
               echo "" >> /var/log/bootstrap-test.log
@@ -189,8 +190,9 @@
               Type = "oneshot";
               RemainAfterExit = true;
             };
+            path = with nixpkgs.legacyPackages.aarch64-linux; [ coreutils ];
             script = ''
-              echo "$(date): Final sensor configuration applied successfully for $(hostname)" >> /var/log/sensor-bootstrap.log
+              echo "$(date): Final sensor configuration applied successfully for $(cat /proc/sys/kernel/hostname)" >> /var/log/sensor-bootstrap.log
               echo "$(date): All packages installed and verified" >> /var/log/sensor-bootstrap.log
               echo "$(date): Bootstrap process completed - ready for sensor operations" >> /var/log/sensor-bootstrap.log
 
