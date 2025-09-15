@@ -22,33 +22,7 @@
       "ext4" "crc32c"
     ];
   };
-
-  # Increase boot partition size for NixOS generations
-  sdImage = {
-    firmwareSize = 512;  # Increase boot partition from ~100MB to 512MB
-    populateFirmwareCommands = let
-      configTxt = pkgs.writeText "config.txt" ''
-        [pi4]
-        kernel=u-boot-rpi4.bin
-
-        [all]
-        arm_64bit=1
-        enable_uart=1
-
-        # GPU
-        gpu_mem=64
-
-        # Enable I2C, SPI (for sensors)
-        dtparam=i2c_arm=on
-        dtparam=spi=on
-      '';
-    in ''
-      ${pkgs.dosfstools}/bin/mkfs.fat -F32 -n FIRMWARE -i 2178694E $img
-      ${pkgs.mtools}/bin/mcopy -i $img ${configTxt} ::config.txt
-      ${pkgs.mtools}/bin/mcopy -i $img ${pkgs.ubootRaspberryPi4_64bit}/u-boot.bin ::u-boot-rpi4.bin
-    '';
-  };
-
+  sdImage.firmwareSize = 200;  # Doubles boot partition size safely
   nix = {
     package = pkgs.nixVersions.stable;
     settings.experimental-features = [ "nix-command" "flakes" ];
