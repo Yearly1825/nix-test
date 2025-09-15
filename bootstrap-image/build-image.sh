@@ -8,6 +8,8 @@ DISCOVERY_PSK=""
 DISCOVERY_SERVICE_IP="10.42.0.1"
 CONFIG_REPO_URL="github:yearly1825/nixos-pi-configs"
 OUTPUT_DIR="./result"
+USE_LIGHTWEIGHT="false"
+USE_ALIGNED="false"
 
 # Color output
 GREEN='\033[0;32m'
@@ -20,21 +22,26 @@ log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
 log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
 show_usage() {
-    echo "Usage: $0 -p <PSK> [-i <IP>] [-r <REPO>] [-o <OUTPUT>]"
+    echo "Usage: $0 -p <PSK> [-i <IP>] [-r <REPO>] [-o <OUTPUT>] [-l] [-a]"
     echo ""
     echo "Options:"
     echo "  -p, --psk <PSK>           Discovery service PSK (required)"
     echo "  -i, --ip <IP>            Discovery service IP (default: 192.168.1.100)"
     echo "  -r, --repo <REPO>        Config repository URL (default: github:yourusername/nixos-pi-configs)"
     echo "  -o, --output <DIR>       Output directory (default: ./result)"
+    echo "  -l, --lightweight        Use lightweight config (prevents memory issues)"
+    echo "  -a, --aligned            Use aligned config (matches final repository config)"
     echo "  -h, --help               Show this help"
     echo ""
     echo "Examples:"
     echo "  # Generate PSK first"
     echo "  python3 ../discovery-service/generate_psk.py"
     echo ""
-    echo "  # Build with generated PSK"
-    echo "  $0 -p abc123def456789abcdef123456789abcdef123456789abcdef123456789abcdef"
+    echo "  # Build aligned image (recommended - matches your final config)"
+    echo "  $0 -p abc123...def -a"
+    echo ""
+    echo "  # Build lightweight image (for memory issues)"
+    echo "  $0 -p abc123...def -l"
     echo ""
     echo "  # Build with custom settings"
     echo "  $0 -p <PSK> -i 10.0.1.100 -r github:myuser/sensor-configs"
@@ -59,6 +66,14 @@ while [[ $# -gt 0 ]]; do
             OUTPUT_DIR="$2"
             shift 2
             ;;
+        -l|--lightweight)
+            USE_LIGHTWEIGHT="true"
+            shift
+            ;;
+        -a|--aligned)
+            USE_ALIGNED="true"
+            shift
+            ;;
         -h|--help)
             show_usage
             exit 0
@@ -79,6 +94,13 @@ if [ -z "$DISCOVERY_PSK" ]; then
     exit 1
 fi
 
+# Validate conflicting options
+if [ "$USE_LIGHTWEIGHT" = "true" ] && [ "$USE_ALIGNED" = "true" ]; then
+    log_error "Cannot use both --lightweight and --aligned options simultaneously."
+    log_info "Recommendation: Use --aligned to match your final repository config"
+    exit 1
+fi
+
 # Validate PSK length (should be 64 hex characters)
 if [[ ! "$DISCOVERY_PSK" =~ ^[a-fA-F0-9]{64}$ ]]; then
     log_warn "PSK should be 64 hex characters. Current length: ${#DISCOVERY_PSK}"
@@ -91,11 +113,24 @@ if [[ ! "$DISCOVERY_PSK" =~ ^[a-fA-F0-9]{64}$ ]]; then
     fi
 fi
 
+# Select configuration file
+if [ "$USE_ALIGNED" = "true" ]; then
+    CONFIG_FILE="./configuration-aligned.nix"
+    log_info "🎯 Using aligned configuration (matches final repository config)"
+elif [ "$USE_LIGHTWEIGHT" = "true" ]; then
+    CONFIG_FILE="./configuration-lightweight.nix"
+    log_info "🪶 Using lightweight configuration (optimized for low memory)"
+else
+    CONFIG_FILE="./configuration.nix"
+    log_info "🏗️  Using full configuration"
+fi
+
 # Show build configuration
 log_info "Building bootstrap image with configuration:"
 log_info "  PSK:            ${DISCOVERY_PSK:0:16}... (truncated)"
 log_info "  Service IP:     $DISCOVERY_SERVICE_IP"
 log_info "  Config Repo:    $CONFIG_REPO_URL"
+log_info "  Config File:    $CONFIG_FILE"
 log_info "  Output Dir:     $OUTPUT_DIR"
 
 # Set environment variables for the flake
@@ -130,16 +165,26 @@ elif [ -f /etc/os-release ] && grep -q -i "arch" /etc/os-release; then
     # Add any arch-specific optimizations if needed
 fi
 
-# Build the image using nix build with inline expression
+# Build the image using nix build with selected configuration
 log_info "Starting build process with args: $CROSS_ARGS"
 if nix build --expr "
   let
-    flake = builtins.getFlake (toString ./.);
-  in
-    (flake.lib.buildBootstrapImage {
+    pkgs = import <nixpkgs> { system = \"aarch64-linux\"; };
+    configuration = import $CONFIG_FILE {
+      config = {};
+      pkgs = pkgs;
+      lib = pkgs.lib;
       discoveryPsk = \"$DISCOVERY_PSK\";
       discoveryServiceIp = \"$DISCOVERY_SERVICE_IP\";
       configRepoUrl = \"$CONFIG_REPO_URL\";
+    };
+  in
+    (pkgs.lib.nixosSystem {
+      system = \"aarch64-linux\";
+      modules = [
+        <nixpkgs/nixos/modules/installer/sd-card/sd-image-aarch64.nix>
+        configuration
+      ];
     }).config.system.build.sdImage
 " --out-link "$OUTPUT_DIR" $CROSS_ARGS --show-trace --impure; then
     log_info "✅ Build completed successfully!"
