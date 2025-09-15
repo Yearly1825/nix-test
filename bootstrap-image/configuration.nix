@@ -36,7 +36,7 @@
 
   # Limit number of generations to keep boot partition clean
   boot.loader.generic-extlinux-compatible.configurationLimit = 3;
-
+#
   networking.hostName = "pi-bootstrap";
 
   # Enable NetworkManager (matching final config to prevent networking disruption)
