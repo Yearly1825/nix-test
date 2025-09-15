@@ -51,9 +51,6 @@
             ];
           };
 
-          # SD image configuration (matching bootstrap)
-          sdImage.firmwareSize = 200;  # Doubles boot partition size safely
-
           # Nix configuration (matching bootstrap)
           nix = {
             package = nixpkgs.legacyPackages.aarch64-linux.nixVersions.stable;
