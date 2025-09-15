@@ -536,12 +536,18 @@
           export NETBIRD_SETUP_KEY="$NETBIRD_SETUP_KEY"
           export ASSIGNED_HOSTNAME="$HOSTNAME"
 
+          # Check disk space before nixos-rebuild
+          df -h > /var/log/bootstrap-disk-before.log 2>&1
+
+          log_info "💾 Disk space before rebuild: $(df -h / | tail -1 | awk '{print $4}' available)"
+          log_info "💾 Boot space before rebuild: $(df -h /boot | tail -1 | awk '{print $4}' available)"
+
           if nixos-rebuild switch \
               --flake "''${CONFIG_REPO_URL}#''${CONFIG_FLAKE_TARGET}" \
               --option substituters "https://cache.nixos.org" \
               --option trusted-public-keys "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=" \
               --no-write-lock-file \
-              --show-trace; then
+              --show-trace 2>&1 | tee /var/log/bootstrap-nixos-rebuild.log; then
 
               log_info "✅ NixOS configuration applied successfully"
               confirm_bootstrap_status "success"
