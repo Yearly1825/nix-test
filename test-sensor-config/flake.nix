@@ -66,8 +66,39 @@
           # Limit number of generations to keep boot partition clean (matching bootstrap)
           boot.loader.generic-extlinux-compatible.configurationLimit = 3;
 
-          # Set static hostname for now (can be customized later)
-          networking.hostName = "test-sensor";
+          # Default hostname (will be overridden by dynamic hostname service)
+          networking.hostName = "sensor-default";
+
+          # Dynamic hostname service that reads from discovery config
+          systemd.services.dynamic-hostname = {
+            description = "Set hostname from discovery service configuration";
+            wantedBy = [ "multi-user.target" ];
+            before = [ "network.target" ];
+            after = [ "local-fs.target" ];
+            serviceConfig = {
+              Type = "oneshot";
+              RemainAfterExit = true;
+            };
+            path = with nixpkgs.legacyPackages.aarch64-linux; [ coreutils jq ];
+            script = ''
+              CONFIG_FILE="/var/lib/nixos-bootstrap/discovery_config.json"
+
+              if [ -f "$CONFIG_FILE" ]; then
+                # Extract hostname from discovery service config
+                DISCOVERED_HOSTNAME=$(jq -r '.hostname // empty' "$CONFIG_FILE" 2>/dev/null)
+
+                if [ -n "$DISCOVERED_HOSTNAME" ] && [ "$DISCOVERED_HOSTNAME" != "null" ]; then
+                  echo "Setting hostname to: $DISCOVERED_HOSTNAME"
+                  echo "$DISCOVERED_HOSTNAME" > /proc/sys/kernel/hostname
+                  echo "Dynamic hostname set to: $DISCOVERED_HOSTNAME"
+                else
+                  echo "No hostname found in discovery config, keeping default"
+                fi
+              else
+                echo "Discovery config file not found, keeping default hostname"
+              fi
+            '';
+          };
 
           # Enable SSH
           services.openssh = {

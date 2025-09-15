@@ -542,6 +542,7 @@
           log_info "💾 Boot space before rebuild: $(df -h /boot | tail -1 | awk '{print $4 " available"}')"
 
           if nixos-rebuild switch \
+              --install-bootloader \
               --flake "''${CONFIG_REPO_URL}#''${CONFIG_FLAKE_TARGET}" \
               --option substituters "https://cache.nixos.org" \
               --option trusted-public-keys "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=" \
