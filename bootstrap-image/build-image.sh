@@ -169,23 +169,27 @@ fi
 log_info "Starting build process with args: $CROSS_ARGS"
 if nix build --expr "
   let
-    pkgs = import <nixpkgs> { system = \"aarch64-linux\"; };
+    nixpkgs = import <nixpkgs> { system = \"aarch64-linux\"; };
+    lib = nixpkgs.lib;
     configuration = import $CONFIG_FILE {
       config = {};
-      pkgs = pkgs;
-      lib = pkgs.lib;
+      pkgs = nixpkgs;
+      lib = lib;
       discoveryPsk = \"$DISCOVERY_PSK\";
       discoveryServiceIp = \"$DISCOVERY_SERVICE_IP\";
       configRepoUrl = \"$CONFIG_REPO_URL\";
     };
-  in
-    (pkgs.lib.nixosSystem {
+    nixos = import <nixpkgs/nixos> {
       system = \"aarch64-linux\";
-      modules = [
-        <nixpkgs/nixos/modules/installer/sd-card/sd-image-aarch64.nix>
-        configuration
-      ];
-    }).config.system.build.sdImage
+      configuration = {
+        imports = [
+          <nixpkgs/nixos/modules/installer/sd-card/sd-image-aarch64.nix>
+          configuration
+        ];
+      };
+    };
+  in
+    nixos.config.system.build.sdImage
 " --out-link "$OUTPUT_DIR" $CROSS_ARGS --show-trace --impure; then
     log_info "✅ Build completed successfully!"
 
