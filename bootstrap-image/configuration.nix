@@ -39,6 +39,9 @@
 
   networking.hostName = "pi-bootstrap";
 
+  # Enable NetworkManager (matching final config to prevent networking disruption)
+  networking.networkmanager.enable = true;
+
   services.openssh = {
     enable = true;
     settings = {
