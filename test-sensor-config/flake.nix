@@ -83,9 +83,6 @@
           # Set root password (matching bootstrap)
           users.users.root.initialPassword = "bootstrap";
 
-          # Enable NetworkManager
-          networking.networkmanager.enable = true;
-
           # Add a test service to verify the config applied (matching bootstrap functionality)
           systemd.services.bootstrap-test = {
             description = "Bootstrap Test Service - Verify Package Installation";
