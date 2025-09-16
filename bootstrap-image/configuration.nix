@@ -22,7 +22,7 @@
       "ext4" "crc32c"
     ];
   };
-  sdImage.firmwareSize = 200;  # Doubles boot partition size safely
+  sdImage.firmwareSize = 512;  # 512MB boot partition - plenty of space for kernels
   nix = {
     package = pkgs.nixVersions.stable;
     settings.experimental-features = [ "nix-command" "flakes" ];
