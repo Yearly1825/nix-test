@@ -58,11 +58,12 @@
     vim
     htop
     tmux
-    # Discovery service dependencies
-    python3
-    python3Packages.requests
-    python3Packages.cryptography
-    python3Packages.pip
+    # Discovery service dependencies - create Python with packages
+    (python3.withPackages (ps: with ps; [
+      requests
+      cryptography
+      pip
+    ]))
 
     # Pre-installed network monitoring tools (speeds up bootstrap)
     kismet
