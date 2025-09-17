@@ -2,7 +2,7 @@
   description = "Bootstrap image for Raspberry Pi fleet with discovery service";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";  # Use 25.11 like working config
   };
 
   outputs = { self, nixpkgs }: let
