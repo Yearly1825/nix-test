@@ -542,7 +542,7 @@
           log_info "💾 Disk space before rebuild: $(df -h / | tail -1 | awk '{print $4 " available"}')"
           log_info "💾 Boot space before rebuild: $(df -h /boot | tail -1 | awk '{print $4 " available"}')"
 
-          if nixos-rebuild switch \
+          if nixos-rebuild boot \
               --install-bootloader \
               --flake "''${CONFIG_REPO_URL}#''${CONFIG_FLAKE_TARGET}" \
               --option substituters "https://cache.nixos.org" \
@@ -550,22 +550,35 @@
               --no-write-lock-file \
               --show-trace 2>&1 | tee /var/log/bootstrap-nixos-rebuild.log; then
 
-              log_info "✅ NixOS configuration applied successfully"
-              confirm_bootstrap_status "success"
+              log_info "✅ NixOS configuration prepared for next boot"
               log_info "🎉 Bootstrap process completed successfully!"
-              log_info "🔄 System will reboot in 10 seconds..."
 
-              # Save completion marker
+              # Save completion marker BEFORE confirming to discovery service
               touch /var/lib/bootstrap-complete
               echo "$(date): Bootstrap completed successfully for $HOSTNAME" >> /var/lib/bootstrap.log
 
-              # Reboot after short delay
+              # Save disk space info after rebuild
+              df -h > /var/log/bootstrap-disk-after.log 2>&1
+              log_info "💾 Disk space after rebuild: $(df -h / | tail -1 | awk '{print $4 " available"}')"
+              log_info "💾 Boot space after rebuild: $(df -h /boot | tail -1 | awk '{print $4 " available"}')"
+
+              # Confirm successful bootstrap to discovery service
+              log_info "📡 Confirming successful bootstrap to discovery service..."
+              confirm_bootstrap_status "success"
+
+              log_info "🔄 System will reboot in 10 seconds to apply new configuration..."
+              log_info "📝 New configuration will be activated on next boot"
+
+              # Sync filesystem before reboot
+              sync
+
+              # Reboot after short delay to apply the new configuration
               sleep 10
               systemctl reboot
 
           else
-              log_error "❌ NixOS configuration failed"
-              confirm_bootstrap_status "failure" "NixOS configuration application failed"
+              log_error "❌ NixOS configuration preparation failed"
+              confirm_bootstrap_status "failure" "NixOS configuration preparation failed"
               exit 1
           fi
       }
@@ -612,7 +625,9 @@
       RemainAfterExit = true;
       StandardOutput = "journal+console";
       StandardError = "journal+console";
-      TimeoutStartSec = "600";  # 10 minute timeout
+      TimeoutStartSec = "900";  # 15 minute timeout for rebuild boot
+      # Ensure the service completes before shutdown
+      TimeoutStopSec = "30";
       Environment = [
         "PATH=/run/current-system/sw/bin:/nix/var/nix/profiles/default/bin"
         "PYTHONPATH=/run/current-system/sw/lib/python3.11/site-packages:${pkgs.python3Packages.requests}/lib/python3.11/site-packages:${pkgs.python3Packages.urllib3}/lib/python3.11/site-packages:${pkgs.python3Packages.charset-normalizer}/lib/python3.11/site-packages:${pkgs.python3Packages.certifi}/lib/python3.11/site-packages:${pkgs.python3Packages.idna}/lib/python3.11/site-packages:${pkgs.python3Packages.cryptography}/lib/python3.11/site-packages:${pkgs.python3Packages.cffi}/lib/python3.11/site-packages"
