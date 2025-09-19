@@ -1,7 +1,43 @@
 #!/usr/bin/env python3
 """
-Generate a secure PSK for the discovery service and create working configuration
+DEPRECATED: Use unified configuration system instead
+====================================================
+
+This script is deprecated. Please use the new unified configuration system:
+
+    cd .. && python3 setup_deployment.py
+
+The new system configures both the discovery service AND bootstrap images
+from a single configuration file, eliminating copy-paste errors.
+
+Legacy function: Generate a secure PSK for the discovery service
 """
+
+import sys
+
+# Show deprecation warning
+print("⚠️  DEPRECATION WARNING")
+print("=" * 50)
+print("This script is deprecated. Please use the new unified configuration system:")
+print()
+print("  cd .. && python3 setup_deployment.py")
+print()
+print("The new system:")
+print("  ✅ Configures discovery service AND bootstrap images")
+print("  ✅ Eliminates copy-paste errors")
+print("  ✅ Includes NTFY configuration")
+print("  ✅ Validates all settings")
+print()
+print("Continue with legacy generator? [y/N]: ", end="")
+
+response = input().strip().lower()
+if response != 'y':
+    print("Aborted. Please use: python3 setup_deployment.py")
+    sys.exit(0)
+
+print()
+print("Continuing with legacy PSK generator...")
+print()
 
 import secrets
 import hashlib

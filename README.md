@@ -74,36 +74,47 @@ nix-sensor/
 └── 📄 README.md             # This overview (you are here)
 ```
 
-## 🚀 **Quick Start**
+## 🚀 **Quick Start** 
 
-### **Step 1: Deploy Discovery Service**
+### **🎯 Unified Setup (Recommended)**
 
-The discovery service manages device registration and provides configuration:
+Configure everything from one place with the unified configuration system:
 
 ```bash
+# 1. Interactive setup - configures discovery service AND bootstrap images
+python3 setup_deployment.py
+
+# 2. Deploy discovery service  
+cd discovery-service && docker-compose up -d
+
+# 3. Build bootstrap image (reads shared config automatically)
+cd ../bootstrap-image && ./build.sh
+
+# 4. Flash and deploy
+sudo dd if=result/nixos-sd-image-*.img of=/dev/sdX bs=4M status=progress
+```
+
+**✅ Benefits:** No copy-paste errors, NTFY notifications, single source of truth
+
+### **📋 Manual Setup (Alternative)**
+
+For manual configuration or CI/CD workflows:
+
+**Step 1: Discovery Service**
+```bash
 cd discovery-service/
-python3 generate_psk.py  # Generate secure keys
+python3 generate_psk.py  # Generate secure keys  
 # Edit config/config.yaml with your settings
 docker-compose up -d     # Start the service
 ```
 
-**📖 [Complete Discovery Service Setup →](discovery-service/README.md)**
-
-### **Step 2: Build Bootstrap Images**
-
-Create SD card images that automatically register with your discovery service:
-
+**Step 2: Bootstrap Images**
 ```bash
 cd bootstrap-image/
 ./build-image.sh -p <your-psk>  # Build with your PSK
 ```
 
-**📖 [Complete Build Instructions →](bootstrap-image/README.md)**
-
-### **Step 3: Flash and Deploy**
-
-Flash SD cards and deploy sensors:
-
+**Step 3: Flash and Deploy**
 ```bash
 sudo dd if=result/nixos-sd-image-*.img of=/dev/sdX bs=4M status=progress
 # Insert SD card in Pi, connect ethernet, power on

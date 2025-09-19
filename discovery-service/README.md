@@ -2,14 +2,20 @@
 
 FastAPI-based discovery service for Raspberry Pi sensor bootstrap process.
 
+> **⚠️ RECOMMENDED SETUP**: Use the unified configuration system for easier setup:
+> ```bash
+> cd .. && python3 setup_deployment.py
+> ```
+> This configures both the discovery service AND bootstrap images automatically.
+
 ## Features
 
-- PSK-based device authentication
+- PSK-based device authentication  
 - Encrypted payload delivery (Netbird keys, SSH keys)
 - Sequential hostname assignment with custom prefixes
 - Comprehensive logging and monitoring
 - Rate limiting and security controls
-- Optional NTFY integration for real-time notifications
+- NTFY integration for real-time notifications
 
 ## Architecture
 

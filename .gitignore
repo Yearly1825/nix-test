@@ -3,10 +3,15 @@ result
 result-*
 *.qcow2
 
-# Secrets
+# Secrets and configurations with sensitive data
 secrets/*
 !secrets/.gitignore
 discovery-service/config/config.yaml
+
+# Deployment configuration (contains PSK and other secrets)
+.deployment.yaml
+# Keep template (safe to commit)
+!.deployment.template.yaml
 
 # Hardware-specific
 hardware-configuration.nix.local

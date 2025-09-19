@@ -4,7 +4,23 @@ Builds NixOS SD card images for Raspberry Pi with integrated discovery service s
 
 ## Quick Start
 
-### Method 1: Build Script (Recommended for beginners)
+### 🎯 **Unified Configuration (Recommended)**
+
+Use the simplified build process with shared configuration:
+
+```bash
+# 1. Configure deployment (if not done already)
+cd .. && python3 setup_deployment.py
+
+# 2. Build image (reads config automatically)
+cd bootstrap-image && ./build.sh
+```
+
+**✅ Benefits:** No parameters needed, NTFY testing, shared configuration
+
+### 📋 **Legacy Methods (Alternative)**
+
+#### Method 1: Parameter-based Build Script
 
 ```bash
 # Generate PSK
@@ -14,7 +30,7 @@ python3 ../discovery-service/generate_psk.py
 ./build-image.sh -p <your-64-char-psk>
 ```
 
-### Method 2: Direct Nix Commands (Full transparency)
+#### Method 2: Direct Nix Commands
 
 ```bash
 # Set your parameters
