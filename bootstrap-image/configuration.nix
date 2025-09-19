@@ -559,6 +559,7 @@
               --option substituters "https://cache.nixos.org" \
               --option trusted-public-keys "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=" \
               --no-write-lock-file \
+              --impure \
               --show-trace 2>&1 | tee /var/log/bootstrap-nixos-rebuild.log; then
 
               log_info "✅ NixOS configuration prepared for next boot"
