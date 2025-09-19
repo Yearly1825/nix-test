@@ -105,7 +105,7 @@ def load_config(config_path: str = None) -> Config:
             'ssh_keys': config_data.get('ssh_keys', []),
             'security': config_data.get('security', {}),
             'api': {
-                'host': config_data.get('discovery_service', {}).get('ip', '0.0.0.0'),
+                'host': '0.0.0.0',  # Always bind to all interfaces in container
                 'port': config_data.get('discovery_service', {}).get('port', 8080)
             },
             'logging': config_data.get('logging', {}),
