@@ -250,7 +250,7 @@ cd ../bootstrap-image && ./build.sh
 
 ### **Sensor Deployment**
 ```bash
-# Flash SD card (compressed image)
+# Flash SD card (compressed image). Change "sdX" to match your SD Card
 zstd -d result/sd-image/*.img.zst --stdout | sudo dd of=/dev/sdX bs=4M status=progress
 
 # Monitor registration
