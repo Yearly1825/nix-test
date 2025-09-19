@@ -30,7 +30,7 @@ app_start_time: float = None
 # Rate limiter
 limiter = Limiter(key_func=get_remote_address)
 
-def create_app(config_path: str = "config/config.yaml") -> FastAPI:
+def create_app(config_path: str = None) -> FastAPI:
     """Create and configure FastAPI application"""
     global config, security, database, logger, notifier, app_start_time
 
