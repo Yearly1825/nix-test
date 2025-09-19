@@ -408,7 +408,7 @@
               local server_url="http://''${DISCOVERY_SERVICE_IP}:''${DISCOVERY_SERVICE_PORT}"
 
               # Create a simple confirmation script
-              cat > /tmp/confirm_bootstrap.py << 'EOFPYTHON'
+              cat > /tmp/confirm_bootstrap.py << EOFPYTHON
       import json
       import sys
       import subprocess
@@ -418,15 +418,15 @@
       try:
           from bootstrap_client import BootstrapClient
 
-          with open("''${CONFIG_FILE}", 'r') as f:
+          with open("$CONFIG_FILE", 'r') as f:
               config = json.load(f)
 
-          client = BootstrapClient("''${server_url}", "''${DISCOVERY_PSK}")
+          client = BootstrapClient("$server_url", "$DISCOVERY_PSK")
           result = client.confirm_bootstrap(
               config['serial'],
               config['hostname'],
-              "''${status}",
-              """''${error_message}"""
+              "$status",
+              """$error_message"""
           )
           print(f"Confirmation result: {result}")
       except Exception as e:

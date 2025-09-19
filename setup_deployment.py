@@ -137,7 +137,7 @@ class DeploymentConfigurator:
         # Prepare test message
         deployment_name = config.get('deployment', {}).get('name', 'UNKNOWN')
         test_message = (
-            f"🧪 Configuration Test\\n"
+            f"Configuration Test\\n"
             f"Deployment: {deployment_name}\\n"
             f"Time: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC\\n"
             f"Source: setup_deployment.py"
@@ -145,7 +145,7 @@ class DeploymentConfigurator:
 
         # Prepare headers
         headers = {
-            "Title": f"🧪 {deployment_name} Config Test",
+            "Title": f"{deployment_name} Config Test",
             "Priority": ntfy_config.get('priority', 'default'),
             "Tags": ",".join(ntfy_config.get('tags', []))
         }

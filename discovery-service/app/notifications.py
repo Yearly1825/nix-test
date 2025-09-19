@@ -56,7 +56,7 @@ class NTFYNotifier:
 
     async def notify_registration(self, hostname: str, serial: str, ip: str):
         """Notify successful device registration"""
-        title = "🖥️ New Device Registered"
+        title = "New Device Registered"
         message = (
             f"Device: {hostname}\n"
             f"Serial: {serial}\n"
@@ -75,7 +75,7 @@ class NTFYNotifier:
                                  error: str = None):
         """Notify device bootstrap confirmation"""
         if status == "success":
-            title = "✅ Device Bootstrap Complete"
+            title = "Device Bootstrap Complete"
             message = (
                 f"Device: {hostname}\n"
                 f"Serial: {serial}\n"
@@ -84,7 +84,7 @@ class NTFYNotifier:
             priority = "default"
             tags = ["success", "bootstrap"]
         else:
-            title = "❌ Device Bootstrap Failed"
+            title = "Device Bootstrap Failed"
             message = (
                 f"Device: {hostname}\n"
                 f"Serial: {serial}\n"
@@ -98,7 +98,7 @@ class NTFYNotifier:
 
     async def notify_security_event(self, event_type: str, ip: str, details: Dict[str, Any]):
         """Notify security events"""
-        title = "🚨 Security Alert"
+        title = "Security Alert"
         message = (
             f"Event: {event_type}\n"
             f"IP: {ip}\n"
@@ -114,7 +114,7 @@ class NTFYNotifier:
 
     async def notify_rate_limit(self, ip: str, endpoint: str, count: int, limit: int):
         """Notify rate limiting events"""
-        title = "⚠️ Rate Limit Exceeded"
+        title = "Rate Limit Exceeded"
         message = (
             f"IP: {ip}\n"
             f"Endpoint: {endpoint}\n"
