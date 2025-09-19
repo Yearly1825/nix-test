@@ -147,7 +147,39 @@ sudo dd if=result/nixos-sd-image-*.img of=/dev/sdX bs=4M status=progress
 - **Stateless Nodes**: Identical, replaceable sensors
 - **Rolling Updates**: Update all nodes from Git
 
-## 📋 **Requirements**
+## 📋 **Requirements & Installation**
+
+### **Prerequisites Installation (Arch Linux)**
+
+Before using this system, install required packages and configure your build environment:
+
+```bash
+# 1. Install Required Packages
+paru -S nix docker docker-compose python python-yaml git base-devel qemu-user-static qemu-user-static-binfmt
+
+# 2. Configure Nix for Cross-Compilation
+sudo tee /etc/nix/nix.conf << 'EOF'
+experimental-features = nix-command flakes
+extra-platforms = aarch64-linux
+system-features = nixos-test benchmark big-parallel kvm
+trusted-users = root @wheel
+EOF
+
+# 3. Enable Services
+# Enable Nix daemon
+sudo systemctl enable --now nix-daemon.service
+
+# Enable Docker
+sudo systemctl enable --now docker.service
+sudo usermod -aG docker $USER
+
+# Enable ARM emulation for cross-compilation
+sudo systemctl enable --now systemd-binfmt.service
+
+# 4. Reboot or re-login for group changes to take effect
+```
+
+### **System Requirements**
 
 ### **Discovery Service Host**
 - Linux system with Docker
@@ -155,7 +187,8 @@ sudo dd if=result/nixos-sd-image-*.img of=/dev/sdX bs=4M status=progress
 - ~100MB RAM, minimal CPU
 
 ### **Build Machine** 
-- Nix package manager
+- Nix package manager with flakes enabled
+- ARM64 emulation support (QEMU)
 - 8GB+ free disk space
 - SD card reader
 
