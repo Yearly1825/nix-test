@@ -84,7 +84,7 @@ nix-sensor/
 └── 📄 README.md             # This overview (you are here)
 ```
 
-## 🚀 **Quick Start** 
+## 🚀 **Quick Start**
 
 ### **🎯 Unified Setup (Recommended)**
 
@@ -94,7 +94,7 @@ Configure everything from one place with the unified configuration system:
 # 1. Interactive setup - configures discovery service AND bootstrap images
 python3 setup_deployment.py
 
-# 2. Deploy discovery service  
+# 2. Deploy discovery service
 cd discovery-service && docker-compose up -d
 
 # 3. Build bootstrap image (reads shared config automatically)
@@ -202,7 +202,7 @@ sudo usermod -aG docker $USER
 - Network accessible to sensors
 - ~100MB RAM, minimal CPU
 
-### **Build Machine** 
+### **Build Machine**
 - Nix package manager with flakes enabled
 - ARM64 emulation support (QEMU)
 - 8GB+ free disk space
@@ -241,7 +241,7 @@ cd nix-sensor
 # 2. Configure deployment (unified setup)
 python3 setup_deployment.py
 
-# 3. Start discovery service  
+# 3. Start discovery service
 cd discovery-service && docker-compose up -d
 
 # 4. Build bootstrap image (reads unified config)
@@ -301,19 +301,6 @@ Contributions welcome! Please:
 3. Test on actual hardware
 4. Submit a pull request
 
-## 📄 **License**
-
-MIT License - see [LICENSE](LICENSE) file for details.
-
-## 🙏 **Acknowledgments**
-
-- **[NixOS](https://nixos.org/)** - Declarative system configuration
-- **[Kismet](https://www.kismetwireless.net/)** - Wireless network monitoring
-- **[Netbird](https://netbird.io/)** - Modern VPN solution
-- **Raspberry Pi Foundation** - Amazing hardware platform
-
 ---
 
 **💡 Pro Tip**: Start with the [Discovery Service README](discovery-service/README.md) for your first deployment, then move to [Bootstrap Image Builder](bootstrap-image/README.md) for creating SD card images.
-
-**🔒 Security Note**: This system is designed for legitimate security research and network monitoring. Ensure compliance with local laws and obtain proper authorization before monitoring wireless networks.
