@@ -74,7 +74,6 @@ nix-sensor/
 │
 ├── 📁 docs/                 # Extended documentation
 │   ├── README.md            # Documentation hub
-│   ├── package-alignment.md # Package management guide
 │   ├── bootstrap-troubleshooting.md # Bootstrap debugging
 │   ├── bootstrap-walkthrough.md # Step-by-step guide
 │   ├── bootstrap-commands.md # Command reference
@@ -230,7 +229,6 @@ sudo usermod -aG docker $USER
 - **[Documentation Hub](docs/README.md)** - Extended guides and references
 - **[CachyOS Setup Guide](docs/cachyos-setup.md)** - Host system preparation
 - **[Bootstrap Troubleshooting](docs/bootstrap-troubleshooting.md)** - Common issues and solutions
-- **[Package Alignment](docs/package-alignment.md)** - Package management guide
 
 ## 🔧 **Development Workflow**
 
