@@ -6,6 +6,13 @@ Comprehensive documentation for the NixOS Raspberry Pi sensor system.
 
 *This directory is prepared for expanded documentation including:*
 
+### **Available Documentation**
+- **`bootstrap-commands.md`** - Direct build commands reference
+- **`bootstrap-troubleshooting.md`** - CachyOS build troubleshooting checklist
+- **`bootstrap-walkthrough.md`** - Complete build process walkthrough
+- **`cachyos-setup.md`** - Prerequisites installation for CachyOS
+- **`package-alignment.md`** - Bootstrap and sensor package alignment
+
 ### **Planned Documentation**
 - `deployment-guide.md` - End-to-end deployment walkthrough
 - `troubleshooting.md` - Common issues and solutions  

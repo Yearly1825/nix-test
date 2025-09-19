@@ -50,7 +50,7 @@ nix build .#bootstrap-image --show-trace
 | **Direct Nix** | Full transparency, easy CI/CD integration, no hidden logic | Manual parameter handling, platform detection | CI/CD, advanced users |
 | **Flake Helpers** | Automatic platform detection, transparent, consistent | Requires understanding of flake structure | Power users, automation |
 
-📖 **For complete transparency, see [COMMANDS.md](./COMMANDS.md) for all direct build commands.**
+📖 **For complete transparency, see [Bootstrap Commands](../docs/bootstrap-commands.md) for all direct build commands.**
 
 ## Cross-Platform Building
 
@@ -213,47 +213,21 @@ docker-compose logs -f discovery-service
 
 ## Troubleshooting
 
-### Cross-Compilation Issues
+For comprehensive troubleshooting guides, see:
+- **[Bootstrap Troubleshooting](../docs/bootstrap-troubleshooting.md)** - CachyOS-specific build issues
+- **[Bootstrap Walkthrough](../docs/bootstrap-walkthrough.md)** - Step-by-step resolution guide
+- **[CachyOS Setup](../docs/cachyos-setup.md)** - Prerequisites and initial setup
 
-**Problem:** Build fails on non-aarch64 systems
-**Solution:** Add cross-compilation flags:
-```bash
---system aarch64-linux --extra-platforms aarch64-linux
-```
+### Quick Fixes
 
-**Problem:** Sandbox errors on CachyOS
-**Solution:** Disable sandbox:
-```bash
---option sandbox false --max-jobs 1
-```
+**Build fails on CachyOS:** The build script automatically adds stability flags (`--option sandbox false --max-jobs 1`)
 
-### Parameter Issues
-
-**Problem:** PSK validation fails
-**Solution:** Ensure PSK is exactly 64 hex characters:
+**PSK validation fails:** Generate a proper 64-character hex PSK:
 ```bash
 python3 ../discovery-service/generate_psk.py
 ```
 
-**Problem:** Environment variables not working
-**Solution:** Verify export and use single build command:
-```bash
-export DISCOVERY_PSK="..."
-env | grep DISCOVERY  # Verify
-nix build .#custom-bootstrap.config.system.build.sdImage
-```
-
-### Build Performance
-
-**Slow builds:** Enable binary cache and reduce parallelism:
-```bash
---extra-substituters "https://cache.nixos.org/" --max-jobs 2
-```
-
-**Memory issues:** Reduce jobs:
-```bash
---max-jobs 1 --cores 1
-```
+**Cross-compilation issues:** Build script automatically detects and adds required flags
 
 ## Security Considerations
 
