@@ -63,6 +63,10 @@
       requests
       cryptography
       pip
+      gps3  # GPS Python tools
+      setuptools  # For Python entry points
+      protobuf  # For Kismet communication
+      numpy  # Often required by capture tools
     ]))
 
     # Pre-installed network monitoring tools (speeds up bootstrap)
@@ -78,6 +82,13 @@
 
     # GPS support
     gpsd
+
+    # VPN support
+    netbird
+
+    # RTL-SDR support for radio monitoring
+    rtl-sdr
+    rtl_433
 
     # Additional system tools
     iotop
