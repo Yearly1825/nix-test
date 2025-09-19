@@ -47,30 +47,41 @@ nix-sensor/
 ├── 📁 discovery-service/     # Registration and configuration service
 │   ├── README.md            # Setup and deployment guide
 │   ├── app/                 # FastAPI application
-│   ├── config/              # Configuration templates
-│   └── docker-compose.yml   # Easy deployment
+│   │   ├── main.py          # API endpoints and routes
+│   │   ├── models.py        # Database models
+│   │   ├── config.py        # Configuration management
+│   │   ├── security.py      # PSK authentication
+│   │   ├── database.py      # Database operations
+│   │   ├── logging.py       # Logging configuration
+│   │   └── notifications.py # NTFY integration
+│   ├── client_example.py    # Example client implementation
+│   ├── bootstrap_client.py  # Bootstrap registration client
+│   ├── generate_psk.py      # PSK generation (deprecated)
+│   ├── docker-compose.yml   # Easy deployment
+│   ├── Dockerfile           # Container definition
+│   ├── requirements.txt     # Python dependencies
+│   ├── nginx.conf           # Reverse proxy config
+│   └── entrypoint.sh        # Container startup script
 │
 ├── 📁 bootstrap-image/       # SD card image builder
 │   ├── README.md            # Build instructions and commands
-│   ├── build-image.sh       # Automated build script
+│   ├── build.sh             # Automated build script
 │   ├── flake.nix            # NixOS image definition
-│   └── configuration.nix    # Bootstrap system config
+│   ├── flake.lock           # Locked dependencies
+│   ├── configuration.nix    # Bootstrap system config
+│   ├── hardware-configuration.nix  # Pi hardware settings
+│   └── network-config.nix   # Ethernet bootstrap networking
 │
-├── 📁 sensor-template/       # Sensor configuration templates
-│   ├── README.md            # Usage and customization guide
-│   ├── flake.nix            # Profile-based configurations
-│   ├── profiles/            # Different sensor configurations
-│   │   ├── full-sensor.nix  # Complete monitoring stack
-│   │   ├── wireless-monitor.nix  # Wireless monitoring only
-│   │   └── minimal.nix      # Basic connectivity
-│   ├── base/                # Shared configuration
-│   └── modules/             # NixOS sensor modules
-│       ├── kismet.nix       # Wireless monitoring
-│       ├── netbird.nix      # VPN connectivity
-│       └── ssh.nix          # Hardened SSH access
-│
-├── 📁 scripts/              # Deployment helper scripts
 ├── 📁 docs/                 # Extended documentation
+│   ├── README.md            # Documentation hub
+│   ├── package-alignment.md # Package management guide
+│   ├── bootstrap-troubleshooting.md # Bootstrap debugging
+│   ├── bootstrap-walkthrough.md # Step-by-step guide
+│   ├── bootstrap-commands.md # Command reference
+│   ├── cachyos-setup.md     # CachyOS specific setup
+│   └── CachyOS Raspberry Pi Bootstrap Preparation
+│
+├── 📄 setup_deployment.py   # Unified configuration system
 └── 📄 README.md             # This overview (you are here)
 ```
 
@@ -210,21 +221,18 @@ sudo systemctl restart nix-daemon
 ### **Component Guides**
 - **[Discovery Service Setup](discovery-service/README.md)** - FastAPI service deployment and configuration
 - **[Bootstrap Image Builder](bootstrap-image/README.md)** - SD card image creation and commands
-- **[Direct Build Commands](bootstrap-image/COMMANDS.md)** - Transparent build command reference
-- **[Sensor Templates](sensor-template/README.md)** - Configuration profiles and customization
 
 ### **Configuration Reference**
-- **[Sensor Profiles](sensor-template/profiles/)** - Pre-built sensor configurations
-  - `full-sensor.nix` - Complete monitoring stack with all tools
-  - `wireless-monitor.nix` - Lightweight wireless monitoring
-  - `minimal.nix` - Basic connectivity only
-- **[NixOS Modules](sensor-template/modules/)** - Kismet, VPN, and SSH configurations
+- **[Unified Configuration](setup_deployment.py)** - Single configuration system for all components
 - **[Network Configuration](bootstrap-image/network-config.nix)** - Ethernet-only bootstrap networking
 - **[Hardware Support](bootstrap-image/hardware-configuration.nix)** - Raspberry Pi hardware settings
+- **[NixOS Image Definition](bootstrap-image/flake.nix)** - Complete system configuration
 
 ### **Extended Documentation**
-- **[Scripts](scripts/README.md)** - Deployment automation helpers
 - **[Documentation Hub](docs/README.md)** - Extended guides and references
+- **[CachyOS Setup Guide](docs/cachyos-setup.md)** - Host system preparation
+- **[Bootstrap Troubleshooting](docs/bootstrap-troubleshooting.md)** - Common issues and solutions
+- **[Package Alignment](docs/package-alignment.md)** - Package management guide
 
 ## 🔧 **Development Workflow**
 
