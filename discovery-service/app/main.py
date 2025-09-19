@@ -38,7 +38,7 @@ def create_app(config_path: str = "config/config.yaml") -> FastAPI:
     config = load_config(config_path)
 
     # Initialize components
-    security = SecurityManager(config.deployment.psk)
+    security = SecurityManager(config.discovery_service.psk)
     database = DatabaseManager(config.database.file)
     logger = DiscoveryLogger(config)
     notifier = NTFYNotifier(config)
@@ -97,7 +97,7 @@ def verify_admin_token(request: Request):
         )
 
     token = auth_header.split(" ")[1]
-    if token != config.security.admin_token:
+    if token != config.discovery_service.admin_token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid admin token"

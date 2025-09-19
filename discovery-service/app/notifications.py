@@ -25,8 +25,25 @@ class NTFYNotifier:
             "Tags": ",".join(tags) if tags else ""
         }
 
+        # Add authentication if configured
+        auth_type = getattr(self.config, 'auth_type', 'none')
+
+        if auth_type == 'basic':
+            username = getattr(self.config, 'username', '')
+            password = getattr(self.config, 'password', '')
+            if username and password:
+                import base64
+                credentials = base64.b64encode(f"{username}:{password}".encode()).decode()
+                headers['Authorization'] = f"Basic {credentials}"
+
+        elif auth_type == 'bearer':
+            token = getattr(self.config, 'token', '')
+            if token:
+                headers['Authorization'] = f"Bearer {token}"
+
         try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
+            timeout = getattr(self.config, 'timeout_seconds', 10)
+            async with httpx.AsyncClient(timeout=timeout) as client:
                 response = await client.post(
                     self.config.url,
                     content=message,

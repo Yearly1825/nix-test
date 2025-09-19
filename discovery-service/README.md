@@ -33,33 +33,16 @@ FastAPI-based discovery service for Raspberry Pi sensor bootstrap process.
 
 ## Configuration
 
-Edit `config/config.yaml`:
+The discovery service now uses the unified configuration system. Configuration is automatically read from `../.deployment.yaml` (or `/app/parent/.deployment.yaml` in Docker).
 
-```yaml
-deployment:
-  name: "DELLDESKTOP"
-  psk: "your-psk-here"
-  
-netbird:
-  setup_key: "your-netbird-setup-key"
-  
-ssh_keys:
-  - "ssh-ed25519 AAAAC3... admin@host"
-  - "ssh-rsa AAAAB3... backup@host"
+**No separate config directory needed!** The service reads the same configuration used by the bootstrap image builder.
 
-security:
-  max_requests_per_ip: 10
-  max_requests_per_device: 3
-  signature_window_seconds: 300
-  
-logging:
-  level: "INFO"
-  file: "discovery.log"
-  
-ntfy:
-  enabled: false
-  url: "https://ntfy.sh/your-topic"
+Configuration is managed through:
+```bash
+cd .. && python3 setup_deployment.py
 ```
+
+This creates a `.deployment.yaml` file that configures both the discovery service AND bootstrap images.
 
 ## Usage
 

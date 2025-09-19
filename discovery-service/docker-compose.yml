@@ -4,7 +4,7 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ./config:/app/config:ro
+      - ..:/app/parent:ro # Mount parent directory to access .deployment.yaml
       - ./data:/app/data
       - ./logs:/app/logs
     environment:
