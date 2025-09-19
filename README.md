@@ -101,8 +101,8 @@ cd discovery-service && docker-compose up -d
 # 3. Build bootstrap image (reads shared config automatically)
 cd ../bootstrap-image && ./build.sh
 
-# 4. Flash and deploy
-sudo dd if=result/nixos-sd-image-*.img of=/dev/sdX bs=4M status=progress
+# 4. Flash and deploy (compressed image)
+zstd -d result/sd-image/*.img.zst --stdout | sudo dd of=/dev/sdX bs=4M status=progress
 ```
 
 **✅ Benefits:** No copy-paste errors, NTFY notifications, single source of truth
@@ -130,7 +130,10 @@ cd bootstrap-image/
 
 **Step 3: Flash and Deploy**
 ```bash
-sudo dd if=result/nixos-sd-image-*.img of=/dev/sdX bs=4M status=progress
+# For compressed images (default)
+zstd -d result/sd-image/*.img.zst --stdout | sudo dd of=/dev/sdX bs=4M status=progress
+# Or for uncompressed images
+sudo dd if=result/*.img of=/dev/sdX bs=4M status=progress
 # Insert SD card in Pi, connect ethernet, power on
 # Watch discovery service logs for registration
 ```
@@ -168,31 +171,26 @@ sudo dd if=result/nixos-sd-image-*.img of=/dev/sdX bs=4M status=progress
 Before using this system, install required packages and configure your build environment:
 
 ```bash
-# 1. Install Nix Package Manager (if not already installed)
-curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
+# 1. Install Required System Packages
+paru -S nix docker docker-compose python python-yaml git base-devel qemu-user-static qemu-user-static-binfmt
 
-# 2. Install Required System Packages
-paru -S docker docker-compose python python-yaml git base-devel
-
-# 3. Configure Nix for Cross-Compilation
-mkdir -p ~/.config/nix
-cat >> ~/.config/nix/nix.conf << 'EOF'
+# 2. Configure Nix for Cross-Compilation
+sudo tee /etc/nix/nix.conf << 'EOF'
 experimental-features = nix-command flakes
 extra-platforms = aarch64-linux
-max-jobs = auto
-cores = 0
+system-features = nixos-test benchmark big-parallel kvm
+trusted-users = root @wheel
 EOF
 
-# 4. Add yourself as trusted user (CRITICAL for cross-compilation)
-echo "trusted-users = root $USER" | sudo tee -a /etc/nix/nix.conf
-
-# 5. Enable Services
+# 3. Enable Services
 sudo systemctl enable --now nix-daemon.service
 sudo systemctl enable --now docker.service
+sudo systemctl enable --now systemd-binfmt.service
+
+# 4. Add user to docker group
 sudo usermod -aG docker $USER
 
-# 6. Restart nix daemon and reboot for changes to take effect
-sudo systemctl restart nix-daemon
+# 5. Reboot for changes to take effect
 # Reboot or re-login for group changes to take effect
 ```
 
@@ -254,8 +252,8 @@ cd ../bootstrap-image && ./build.sh
 
 ### **Sensor Deployment**
 ```bash
-# Flash SD card
-sudo dd if=result/*.img of=/dev/sdX bs=4M status=progress
+# Flash SD card (compressed image)
+zstd -d result/sd-image/*.img.zst --stdout | sudo dd of=/dev/sdX bs=4M status=progress
 
 # Monitor registration
 cd ../discovery-service
