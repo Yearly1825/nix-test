@@ -60,9 +60,12 @@ gunicorn app.main:app --host 0.0.0.0 --port 8080
 ## Docker Deployment
 
 ```bash
-# Build image
-docker build -t discovery-service .
+# Deploy with docker-compose (recommended)
+docker-compose up -d
 
-# Run container
-docker run -p 8080:8080 -v ./config:/app/config discovery-service
+# Or build and run manually
+docker build -t discovery-service .
+docker run -p 8080:8080 -v ..:/app/parent:ro discovery-service
 ```
+
+The docker-compose.yml automatically mounts the parent directory to access `.deployment.yaml`.

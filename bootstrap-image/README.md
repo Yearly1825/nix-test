@@ -74,18 +74,34 @@ nix build .#bootstrap-image \
   --show-trace
 ```
 
-### CachyOS Specific Issues
+### CachyOS Prerequisites and Setup
 
-If you encounter sandbox or build issues on CachyOS:
+**First-time CachyOS users:** You need to install Nix before building:
 
 ```bash
-nix build .#bootstrap-image \
-  --system aarch64-linux \
-  --extra-platforms aarch64-linux \
-  --option sandbox false \
-  --max-jobs 1 \
-  --show-trace
+# Install Nix (required for building NixOS images)
+curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
+
+# Configure Nix for cross-compilation
+mkdir -p ~/.config/nix
+cat >> ~/.config/nix/nix.conf << 'EOF'
+experimental-features = nix-command flakes
+extra-platforms = aarch64-linux
+max-jobs = auto
+cores = 0
+EOF
+
+# Add yourself as trusted user (CRITICAL)
+echo "trusted-users = root $USER" | sudo tee -a /etc/nix/nix.conf
+
+# Restart daemon and reload shell
+sudo systemctl restart nix-daemon
+source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
 ```
+
+**See: [Complete CachyOS Setup Guide](../docs/cachyos-setup.md)**
+
+The build script automatically detects CachyOS and adds stability flags (`--option sandbox false --max-jobs 1`).
 
 ## Requirements
 
@@ -213,18 +229,32 @@ docker-compose logs -f discovery-service
 
 ## Troubleshooting
 
-For comprehensive troubleshooting guides, see:
-- **[Bootstrap Troubleshooting](../docs/bootstrap-troubleshooting.md)** - CachyOS-specific build issues
+### Quick Diagnosis
+
+**Error: "nix: command not found"**
+- Install Nix: See [CachyOS Setup Guide](../docs/cachyos-setup.md)
+
+**Error: "system aarch64-linux not supported"**  
+- Add trusted user: `echo "trusted-users = root $USER" | sudo tee -a /etc/nix/nix.conf`
+- Restart daemon: `sudo systemctl restart nix-daemon`
+
+**Error: Configuration not found**
+- Run unified setup: `cd .. && python3 setup_deployment.py`
+
+### Comprehensive Guides
+
+For detailed troubleshooting, see:
+- **[CachyOS Setup Guide](../docs/cachyos-setup.md)** - Prerequisites and initial setup
+- **[Bootstrap Troubleshooting](../docs/bootstrap-troubleshooting.md)** - CachyOS-specific build issues  
 - **[Bootstrap Walkthrough](../docs/bootstrap-walkthrough.md)** - Step-by-step resolution guide
-- **[CachyOS Setup](../docs/cachyos-setup.md)** - Prerequisites and initial setup
 
 ### Quick Fixes
 
 **Build fails on CachyOS:** The build script automatically adds stability flags (`--option sandbox false --max-jobs 1`)
 
-**PSK validation fails:** Generate a proper 64-character hex PSK:
+**PSK validation fails:** Use unified configuration:
 ```bash
-python3 ../discovery-service/generate_psk.py
+cd .. && python3 setup_deployment.py
 ```
 
 **Cross-compilation issues:** Build script automatically detects and adds required flags

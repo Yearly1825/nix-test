@@ -114,7 +114,7 @@ When adding new packages to `nixos-pi-configs`:
 4. **Rebuild and test**: 
    ```bash
    cd nix-sensor/bootstrap-image
-   ./build-image.sh -p <PSK>
+   ./build.sh  # Uses unified configuration
    ```
 
 ## Recent Changes (2024)

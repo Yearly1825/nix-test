@@ -108,16 +108,16 @@ echo "Test with: nix --version"
 
 Once prerequisites are installed:
 
-1. **Generate PSK:**
+1. **Configure deployment (unified setup):**
 ```bash
-cd ../discovery-service
-python3 generate_psk.py
+cd ../
+python3 setup_deployment.py
 ```
 
 2. **Build the image:**
 ```bash
-cd ../bootstrap-image
-./build-image.sh -p <your-64-char-psk> -i <discovery-ip> -r <config-repo>
+cd bootstrap-image
+./build.sh  # Reads configuration automatically
 ```
 
 ## CachyOS-Specific Notes

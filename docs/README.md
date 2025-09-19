@@ -39,11 +39,11 @@ For now, documentation is distributed across component directories:
 
 ### **Essential Commands**
 ```bash
-# Generate PSK
-cd discovery-service && python3 generate_psk.py
+# Unified setup (recommended)
+python3 setup_deployment.py
 
-# Build bootstrap image
-cd bootstrap-image && ./build-image.sh -p <psk>
+# Build bootstrap image (reads unified config)
+cd bootstrap-image && ./build.sh
 
 # Flash SD card
 sudo dd if=result/*.img of=/dev/sdX bs=4M status=progress

@@ -103,15 +103,18 @@ For manual configuration or CI/CD workflows:
 **Step 1: Discovery Service**
 ```bash
 cd discovery-service/
-python3 generate_psk.py  # Generate secure keys  
-# Edit config/config.yaml with your settings
+python3 generate_psk.py  # DEPRECATED: Use unified setup instead
+# Edit config/config.yaml with your settings - DEPRECATED
 docker-compose up -d     # Start the service
 ```
+
+**Note:** The `generate_psk.py` script is deprecated. Use the unified configuration system for new deployments.
 
 **Step 2: Bootstrap Images**
 ```bash
 cd bootstrap-image/
-./build-image.sh -p <your-psk>  # Build with your PSK
+# DEPRECATED: Use ./build.sh without parameters (reads .deployment.yaml)
+./build.sh  # Build with unified config
 ```
 
 **Step 3: Flash and Deploy**
@@ -149,35 +152,40 @@ sudo dd if=result/nixos-sd-image-*.img of=/dev/sdX bs=4M status=progress
 
 ## 📋 **Requirements & Installation**
 
-### **Prerequisites Installation (Arch Linux)**
+### **Prerequisites Installation (CachyOS/Arch Linux)**
 
 Before using this system, install required packages and configure your build environment:
 
 ```bash
-# 1. Install Required Packages
-paru -S nix docker docker-compose python python-yaml git base-devel qemu-user-static qemu-user-static-binfmt
+# 1. Install Nix Package Manager (if not already installed)
+curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
 
-# 2. Configure Nix for Cross-Compilation
-sudo tee /etc/nix/nix.conf << 'EOF'
+# 2. Install Required System Packages
+paru -S docker docker-compose python python-yaml git base-devel
+
+# 3. Configure Nix for Cross-Compilation
+mkdir -p ~/.config/nix
+cat >> ~/.config/nix/nix.conf << 'EOF'
 experimental-features = nix-command flakes
 extra-platforms = aarch64-linux
-system-features = nixos-test benchmark big-parallel kvm
-trusted-users = root @wheel
+max-jobs = auto
+cores = 0
 EOF
 
-# 3. Enable Services
-# Enable Nix daemon
-sudo systemctl enable --now nix-daemon.service
+# 4. Add yourself as trusted user (CRITICAL for cross-compilation)
+echo "trusted-users = root $USER" | sudo tee -a /etc/nix/nix.conf
 
-# Enable Docker
+# 5. Enable Services
+sudo systemctl enable --now nix-daemon.service
 sudo systemctl enable --now docker.service
 sudo usermod -aG docker $USER
 
-# Enable ARM emulation for cross-compilation
-sudo systemctl enable --now systemd-binfmt.service
-
-# 4. Reboot or re-login for group changes to take effect
+# 6. Restart nix daemon and reboot for changes to take effect
+sudo systemctl restart nix-daemon
+# Reboot or re-login for group changes to take effect
 ```
+
+**For detailed CachyOS setup instructions, see: [CachyOS Setup Guide](docs/cachyos-setup.md)**
 
 ### **System Requirements**
 
@@ -226,18 +234,14 @@ sudo systemctl enable --now systemd-binfmt.service
 git clone <your-repo-url>
 cd nix-sensor
 
-# 2. Generate discovery service keys
-cd discovery-service && python3 generate_psk.py
+# 2. Configure deployment (unified setup)
+python3 setup_deployment.py
 
-# 3. Configure discovery service
-vim config/config.yaml  # Add your settings
+# 3. Start discovery service  
+cd discovery-service && docker-compose up -d
 
-# 4. Start discovery service
-docker-compose up -d
-
-# 5. Build bootstrap image
-cd ../bootstrap-image
-./build-image.sh -p <your-psk>
+# 4. Build bootstrap image (reads unified config)
+cd ../bootstrap-image && ./build.sh
 ```
 
 ### **Sensor Deployment**
