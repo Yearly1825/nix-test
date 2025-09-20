@@ -1,0 +1,24 @@
+# Staging Environment Configuration
+# For pre-production testing and validation
+
+discovery_service:
+  host: "0.0.0.0"
+  port: 8000
+  psk: "staging-psk-change-before-production"
+  database_path: "/app/data/discovery-staging.db"
+
+ntfy:
+  enabled: true
+  endpoint: "https://staging-ntfy.internal.com"
+  topic: "sensor-bootstrap-staging"
+
+logging:
+  level: "INFO"
+  format: "json"
+
+# Staging-specific settings
+staging:
+  auto_confirm: false
+  rate_limiting: true
+  metrics_enabled: true
+  health_check_interval: 30  # seconds

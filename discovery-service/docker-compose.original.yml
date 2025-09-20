@@ -1,8 +1,6 @@
 services:
-  discovery-service-simple:
-    build:
-      context: .
-      dockerfile: Dockerfile.simple
+  discovery-service:
+    build: .
     ports:
       - "8080:8080"
     volumes:

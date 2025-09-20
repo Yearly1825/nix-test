@@ -1,0 +1,78 @@
+# Production Docker Compose Configuration
+# For secure production deployment with monitoring
+
+version: '3.8'
+
+services:
+  discovery-service:
+    build:
+      context: ../../discovery-service
+      dockerfile: Dockerfile.simple
+    container_name: discovery-service-prod
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8000:8000"  # Bind to localhost only
+    volumes:
+      - discovery_data:/app/data
+      - discovery_logs:/app/logs
+      - ../deployment-prod.yaml:/app/.deployment.yaml:ro
+    environment:
+      - DISCOVERY_PSK=${DISCOVERY_PSK}
+      - NTFY_ENDPOINT=${NTFY_ENDPOINT}
+      - NTFY_AUTH_TOKEN=${NTFY_AUTH_TOKEN}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=100m
+
+  # Optional: Reverse proxy for TLS termination
+  nginx:
+    image: nginx:alpine
+    container_name: discovery-nginx-prod
+    restart: unless-stopped
+    ports:
+      - "443:443"
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/ssl/certs:ro
+    depends_on:
+      - discovery-service
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  discovery_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/discovery-service/data
+  discovery_logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/discovery-service/logs
+
+networks:
+  default:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
