@@ -1,95 +1,62 @@
-# Bootstrap Image Builder
+# SD Card Image Builder
 
-Builds NixOS SD card images for Raspberry Pi with integrated discovery service support.
+**Creates custom SD card images that configure your Raspberry Pis automatically.**
 
-## Quick Start
+## Quick Build
 
-Use the unified configuration system for streamlined builds:
-
+**Step 1:** Configure everything (if you haven't already):
 ```bash
-# 1. Configure deployment (if not done already)
 cd .. && python3 setup_deployment.py
+```
 
-# 2. Build image (reads config automatically)
+**Step 2:** Build your custom image:
+```bash
 cd bootstrap-image && ./build.sh
 ```
 
-**✅ Benefits:** No parameters needed, NTFY testing, shared configuration
+**That's it!** You'll get a `.img.zst` file ready to flash to SD cards.
 
 
 
-## Cross-Platform Building
+## First Time Setup
 
-The build script automatically detects your platform and handles cross-compilation from x86_64 to aarch64 (Raspberry Pi). No manual configuration needed.
+**Need to install prerequisites?** Follow the [CachyOS Setup Guide](../docs/cachyos-setup.md).
 
-### CachyOS Prerequisites and Setup
+The build script automatically:
+- Detects your platform (x86_64 → aarch64 cross-compilation)  
+- Adds stability flags for CachyOS/Arch systems
+- Handles all the technical details for you
 
-**First-time CachyOS users:** You need to install Nix before building:
+**Just run `./build.sh` and it works!**
 
-```bash
-# Install Nix (required for building NixOS images)
-curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
+## What You Need
 
-# Configure Nix for cross-compilation
-mkdir -p ~/.config/nix
-cat >> ~/.config/nix/nix.conf << 'EOF'
-experimental-features = nix-command flakes
-extra-platforms = aarch64-linux
-max-jobs = auto
-cores = 0
-EOF
-
-# Add yourself as trusted user (CRITICAL)
-echo "trusted-users = root $USER" | sudo tee -a /etc/nix/nix.conf
-
-# Restart daemon and reload shell
-sudo systemctl restart nix-daemon
-source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
-```
-
-**See: [Complete CachyOS Setup Guide](../docs/cachyos-setup.md)**
-
-The build script automatically detects CachyOS and adds stability flags (`--option sandbox false --max-jobs 1`).
-
-## Requirements
-
-### Hardware Requirements
-- **Ethernet connection** - Required for bootstrap process
-- WiFi is disabled during bootstrap for security and reliability
-- SD card (16GB+ recommended)
+**For Your Raspberry Pi:**
 - Raspberry Pi 4 (2GB+ RAM recommended)
+- 16GB+ SD card
+- **Ethernet cable** (WiFi disabled during setup for security)
+- DHCP network with internet access
 
-### Network Requirements
-- DHCP-enabled ethernet network
-- Internet access for downloading packages
-- Access to discovery service IP
+**The build script automatically gets everything else from your configuration!**
 
-## Configuration
-
-### Required Parameters
-
-| Parameter | Description | Example |
-|-----------|-------------|---------|
-| `DISCOVERY_PSK` | 64-character hex PSK | `abc123def456...` |
-| `DISCOVERY_SERVICE_IP` | Discovery service IP | `192.168.1.100` |
-| `CONFIG_REPO_URL` | Your NixOS config repo | `github:user/configs` |
-
-### Build Script Options
+## Build Options
 
 ```bash
 ./build.sh [OPTIONS]
 
 Options:
-  --ntfy-test          Test NTFY notifications before building
-  -o, --output <DIR>   Output directory (default: ./result)
+  --ntfy-test          Test notifications before building
+  -o, --output <DIR>   Put image in different folder  
   -h, --help           Show help
 ```
 
+**Most of the time you just run:** `./build.sh`
 
 
-## Development Workflow
 
-### 1. Configure Deployment
+## Complete Workflow
+
+### 1. Configure (Once)
 ```bash
 cd .. && python3 setup_deployment.py
 ```
@@ -99,99 +66,53 @@ cd .. && python3 setup_deployment.py
 ./build.sh
 ```
 
-### 3. Flash Image
+### 3. Flash to SD Card
 ```bash
-# Find your SD card device
+# Find your SD card
 lsblk
 
-# Flash (replace sdX with your device)
-sudo dd if=result/nixos-sd-image-*.img of=/dev/sdX bs=4M status=progress sync
+# Flash (CAREFUL: Replace sdX with your actual device!)
+zstd -d result/sd-image/*.img.zst --stdout | sudo dd of=/dev/sdX bs=4M status=progress
 ```
 
-### 4. Boot and Monitor
+### 4. Boot and Watch
 ```bash
-# Start discovery service
-cd ../discovery-service
-docker-compose up -d
+# Start discovery service (if not running)
+cd ../discovery-service && docker-compose up -d
 
-# Boot Raspberry Pi with ETHERNET CONNECTED
-# WiFi is disabled during bootstrap - ethernet is required
-
-# Monitor logs
+# Insert SD card in Pi, connect ethernet, power on
+# Check logs to see your Pi register:
 docker-compose logs -f discovery-service
 ```
 
-## Troubleshooting
+**Your Pi will automatically configure itself in ~10 minutes!**
 
-### Quick Diagnosis
+## Something Wrong?
+
+**Common issues and quick fixes:**
 
 **Error: "nix: command not found"**
-- Install Nix: See [CachyOS Setup Guide](../docs/cachyos-setup.md)
+→ Install Nix: [CachyOS Setup Guide](../docs/cachyos-setup.md)
 
-**Error: "system aarch64-linux not supported"**  
-- Add trusted user: `echo "trusted-users = root $USER" | sudo tee -a /etc/nix/nix.conf`
-- Restart daemon: `sudo systemctl restart nix-daemon`
+**Error: "Configuration not found"**  
+→ Run setup first: `cd .. && python3 setup_deployment.py`
 
-**Error: Configuration not found**
-- Run unified setup: `cd .. && python3 setup_deployment.py`
+**Build fails**
+→ See [Troubleshooting Guide](../docs/bootstrap-troubleshooting.md)
 
-### Comprehensive Guides
+**The build script handles most issues automatically!**
 
-For detailed troubleshooting, see:
-- **[CachyOS Setup Guide](../docs/cachyos-setup.md)** - Prerequisites and initial setup
-- **[Bootstrap Troubleshooting](../docs/bootstrap-troubleshooting.md)** - CachyOS-specific build issues  
-- **[Bootstrap Walkthrough](../docs/bootstrap-walkthrough.md)** - Step-by-step resolution guide
+## Security Note
 
-### Quick Fixes
+⚠️ **Your built image contains your security keys** - don't share the `.img.zst` file with others.
 
-**Build fails on CachyOS:** The build script automatically adds stability flags (`--option sandbox false --max-jobs 1`)
-
-**Configuration issues:** Use unified configuration:
-```bash
-cd .. && python3 setup_deployment.py
-```
-
-**Cross-compilation issues:** Build script automatically detects and adds required flags
-
-## Security Considerations
-
-⚠️ **Important:** The built image contains your PSK embedded in the filesystem.
-
-**Best Practices:**
-- Generate unique PSK per deployment  
-- Limit physical access to SD cards
-- Rotate PSKs periodically
-- Don't share built images
-
-## Advanced Usage
-
-### Custom Output Location
-```bash
-./build.sh -o custom-image
-```
-
-### Debug Build
-```bash
-# Add --show-trace to build.sh for detailed output
-nix build .#bootstrap-image --show-trace --verbose
-```
-
-## Files Overview
-
-| File | Purpose |
-|------|---------|
-| `flake.nix` | NixOS image definition with parameter injection |
-| `configuration.nix` | Bootstrap system configuration |
-| `build.sh` | Unified build script |
-| `README.md` | This documentation |
-
-## Next Steps
+## What's Next?
 
 After building your image:
 
-1. **Flash to SD card** using `dd` or similar tool
-2. **Boot Pi** with ethernet connection  
-3. **Monitor discovery service** for device registration
-4. **Verify bootstrap** completion via logs or NTFY
+1. **Flash to SD cards:** `zstd -d result/sd-image/*.img.zst --stdout | sudo dd of=/dev/sdX bs=4M status=progress`
+2. **Boot Pis with ethernet**  
+3. **Watch discovery service logs:** `docker-compose logs -f discovery-service`
+4. **Pis configure themselves automatically!**
 
-For the main sensor configuration, see the [main README](../README.md) for flake target setup requirements.
+For more help, see the [main README](../README.md).

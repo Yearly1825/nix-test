@@ -1,95 +1,80 @@
 # Discovery Service
 
-FastAPI-based discovery service for Raspberry Pi sensor bootstrap process.
+**The service that gives your Raspberry Pis their names and configuration.**
 
-> **⚠️ RECOMMENDED SETUP**: Use the unified configuration system for easier setup:
-> ```bash
-> cd .. && python3 setup_deployment.py
-> ```
-> This configures both the discovery service AND bootstrap images automatically.
+When a Pi boots up, it contacts this service to get:
+- A unique hostname (`SENSOR-01`, `SENSOR-02`, etc.)
+- VPN connection keys
+- SSH access keys  
+- Configuration details
 
-## Features
+## How to Run It
 
-- PSK-based device authentication  
-- Encrypted payload delivery (Netbird keys, SSH keys)
-- Sequential hostname assignment with custom prefixes
-- Basic logging and monitoring
-- NTFY integration for real-time notifications
-
-## Architecture
-
-### Security Model (Simplified)
-1. **PSK Authentication**: Each deployment uses a shared PSK burned into bootstrap images
-2. **Request Signing**: HMAC-SHA256 signatures (no timestamp validation)
-3. **Encrypted Payloads**: AES-256-GCM encryption for sensitive data
-
-### API Endpoints
-- `POST /register` - Device registration and configuration delivery
-- `POST /confirm` - Device confirmation after successful bootstrap
-- `GET /health` - Health check endpoint
-- `GET /stats` - Registration statistics (public access)
-
-### API Request Format (Simplified)
-
-**Registration Request:**
-```json
-{
-  "serial": "10000000a1b2c3d4",
-  "mac": "b8:27:eb:12:34:56",
-  "signature": "hmac_sha256_hex"
-}
-```
-
-**Confirmation Request:**
-```json
-{
-  "serial": "10000000a1b2c3d4", 
-  "hostname": "sensor-01",
-  "signature": "hmac_sha256_hex",
-  "status": "success"
-}
-```
-
-## Configuration
-
-The discovery service now uses the unified configuration system. Configuration is automatically read from `../.deployment.yaml` (or `/app/parent/.deployment.yaml` in Docker).
-
-**No separate config directory needed!** The service reads the same configuration used by the bootstrap image builder.
-
-Configuration is managed through:
+**Easy way (with Docker):**
 ```bash
-cd .. && python3 setup_deployment.py
-```
-
-This creates a `.deployment.yaml` file that configures both the discovery service AND bootstrap images.
-
-## Usage
-
-```bash
-# Install dependencies
-pip install -r requirements.txt
-
-# Run development server
-python -m app.main
-
-# Run with gunicorn (production)
-gunicorn app.main:app --host 0.0.0.0 --port 8080
-```
-
-## Docker Deployment
-
-```bash
-# Deploy with docker-compose (recommended)
 docker-compose up -d
-
-# Or build and run manually
-docker build -t discovery-service .
-docker run -p 8080:8080 -v ..:/app/parent:ro discovery-service
 ```
 
-The docker-compose.yml automatically mounts the parent directory to access `.deployment.yaml`.
+**Without Docker:**
+```bash
+pip install -r requirements.txt
+python -m app.main
+```
 
-## Documentation
+**Configure first:** Make sure you've run `python3 setup_deployment.py` from the main directory.
 
-- **[Project Documentation](../docs/)** - Extended guides and references
-- **[Bootstrap Image Builder](../bootstrap-image/README.md)** - SD card image creation
+## What It Does
+
+**When a Pi contacts the service:**
+
+1. **Authentication** - Pi proves it's yours using a secret key
+2. **Name Assignment** - Gets next available name (`SENSOR-01`, `SENSOR-02`, etc.)  
+3. **Secure Delivery** - Receives encrypted VPN keys and SSH keys
+4. **Confirmation** - Pi reports back when setup is complete
+
+**Built-in endpoints:**
+- `POST /register` - Pi requests its configuration
+- `POST /confirm` - Pi confirms setup succeeded  
+- `GET /health` - Check if service is running
+- `GET /stats` - See how many Pis have registered
+
+## Security
+
+- **Secret key authentication** - Only your Pis can register
+- **Encrypted delivery** - Each Pi gets uniquely encrypted keys
+- **No plaintext secrets** - Keys are protected in transit and storage
+
+The system automatically generates all security keys when you run the setup wizard.
+
+## Checking if it Works
+
+**Test the service:**
+```bash
+# Check if running
+curl http://localhost:8080/health
+
+# See registration stats  
+curl http://localhost:8080/stats
+```
+
+**Monitor logs:**
+```bash
+# With Docker
+docker-compose logs -f discovery-service
+
+# Without Docker  
+# Logs appear in terminal where you started it
+```
+
+## Troubleshooting
+
+**Service won't start:**
+- Make sure you ran `python3 setup_deployment.py` first
+- Check that port 8080 isn't already in use: `netstat -ln | grep 8080`
+
+**Pis not registering:**
+- Check Pi has ethernet connection
+- Verify discovery service IP is reachable from Pi's network
+- Check logs for error messages
+
+**Need more help?** See the [main troubleshooting guide](../docs/bootstrap-troubleshooting.md).
