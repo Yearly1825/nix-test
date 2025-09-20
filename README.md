@@ -193,10 +193,6 @@ sudo usermod -aG docker $USER
 ## 🆘 **Getting Help**
 
 **Something not working?** Check these in order:
-
-1. **[CachyOS Setup Guide](docs/cachyos-setup.md)** - Installing prerequisites
-2. **[Troubleshooting Guide](docs/bootstrap-troubleshooting.md)** - Common issues and fixes
-3. **Component guides** if you need to dive deeper:
    - [Discovery Service](discovery-service/README.md)
    - [Bootstrap Images](bootstrap-image/README.md)
 
