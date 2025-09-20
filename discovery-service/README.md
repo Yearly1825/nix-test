@@ -17,7 +17,14 @@ docker-compose up -d
 
 **Without Docker:**
 ```bash
+# Create a virtual environment (recommended)
+python3 -m venv venv
+source venv/bin/activate
+
+# Install dependencies
 pip install -r requirements.txt
+
+# Run the service
 python -m app.main
 ```
 
@@ -66,11 +73,27 @@ docker-compose logs -f discovery-service
 # Logs appear in terminal where you started it
 ```
 
+**Managing the Python service:**
+```bash
+# To restart after reboot (without Docker)
+cd discovery-service
+source venv/bin/activate  # Reactivate virtual environment
+python -m app.main
+
+# To stop: Press Ctrl+C in the terminal
+# To run in background: python -m app.main &
+```
+
 ## Troubleshooting
 
 **Service won't start:**
 - Make sure you ran `python3 setup_deployment.py` first
 - Check that port 8080 isn't already in use: `netstat -ln | grep 8080`
+- If using Python directly, ensure virtual environment is activated: `source venv/bin/activate`
+
+**Python/pip issues:**
+- If you get "externally-managed-environment" error: Use the virtual environment method above
+- Missing dependencies: Make sure `pip install -r requirements.txt` ran successfully
 
 **Pis not registering:**
 - Check Pi has ethernet connection
