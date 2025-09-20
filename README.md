@@ -10,7 +10,7 @@ Flash an SD card → Boot Pi with ethernet → **Done!**
 
 Your Pi will automatically:
 - Get a unique name (`SENSOR-01`, `SENSOR-02`, etc.)
-- Download its configuration from your Git repository  
+- Download its configuration from your Git repository
 - Join your VPN securely
 - Start monitoring network traffic
 - Send you notifications when ready
@@ -56,7 +56,7 @@ nix-sensor/
 ```
 
 **You only need to work with these files:**
-- `setup_deployment.py` - One-time configuration 
+- `setup_deployment.py` - One-time configuration
 - `discovery-service/` - Start the naming service
 - `bootstrap-image/` - Build SD card images
 
@@ -74,7 +74,7 @@ python3 setup_deployment.py
 This wizard will:
 - Generate security keys
 - Ask for your VPN settings
-- Set up your SSH keys  
+- Set up your SSH keys
 - Test notifications (optional)
 
 ### **Step 2: Start the Discovery Service** 🚀
@@ -87,7 +87,7 @@ cd discovery-service
 docker-compose up -d
 ```
 
-#### **Option B: Without Docker**  
+#### **Option B: Without Docker**
 ```bash
 cd discovery-service
 pip install -r requirements.txt
@@ -125,7 +125,7 @@ zstd -d result/sd-image/*.img.zst --stdout | sudo dd of=/dev/sdX bs=4M status=pr
 - All traffic goes through your VPN
 - SSH access with your public keys only
 
-📡 **Professional Monitoring**  
+📡 **Professional Monitoring**
 - Kismet wireless packet analysis
 - GPS location tracking (if available)
 - Multiple export formats (PCAP, CSV, JSON)
@@ -172,18 +172,16 @@ sudo usermod -aG docker $USER
 # Reboot or re-login for group changes to take effect
 ```
 
-**For detailed CachyOS setup instructions, see: [CachyOS Setup Guide](docs/cachyos-setup.md)**
-
 ### **What You Need**
 
 **Your Computer** (to build images):
 - Linux (CachyOS/Arch recommended, but any works)
-- 8GB+ free disk space  
+- 8GB+ free disk space
 - SD card reader
 - Internet connection
 
 **Discovery Service** (can be same computer):
-- Any Linux system 
+- Any Linux system
 - Docker (optional - can run without it)
 - Accessible from your network
 
@@ -196,10 +194,10 @@ sudo usermod -aG docker $USER
 
 **Something not working?** Check these in order:
 
-1. **[CachyOS Setup Guide](docs/cachyos-setup.md)** - Installing prerequisites  
+1. **[CachyOS Setup Guide](docs/cachyos-setup.md)** - Installing prerequisites
 2. **[Troubleshooting Guide](docs/bootstrap-troubleshooting.md)** - Common issues and fixes
 3. **Component guides** if you need to dive deeper:
-   - [Discovery Service](discovery-service/README.md) 
+   - [Discovery Service](discovery-service/README.md)
    - [Bootstrap Images](bootstrap-image/README.md)
 
 ## 🔧 **Daily Operations**
