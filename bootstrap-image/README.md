@@ -20,7 +20,7 @@ cd bootstrap-image && ./build.sh
 
 ## First Time Setup
 
-**Need to install prerequisites?** Follow the [CachyOS Setup Guide](../docs/cachyos-setup.md).
+**Need to install prerequisites?** See the "Prerequisites Installation" section in the main README.
 
 The build script automatically:
 - Detects your platform (x86_64 → aarch64 cross-compilation)  
@@ -92,13 +92,13 @@ docker-compose logs -f discovery-service
 **Common issues and quick fixes:**
 
 **Error: "nix: command not found"**
-→ Install Nix: [CachyOS Setup Guide](../docs/cachyos-setup.md)
+→ Install Nix: See "Prerequisites Installation" in the main README
 
 **Error: "Configuration not found"**  
 → Run setup first: `cd .. && python3 setup_deployment.py`
 
 **Build fails**
-→ See [Troubleshooting Guide](../docs/bootstrap-troubleshooting.md)
+→ Check prerequisites in main README and ensure configuration is complete
 
 **The build script handles most issues automatically!**
 

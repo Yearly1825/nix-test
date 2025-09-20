@@ -50,9 +50,8 @@ Three simple components that work together:
 ```
 nix-sensor/
 ├── 📄 setup_deployment.py   # ← Start here! Configure everything
-├── 📁 discovery-service/     # ← Service that assigns names to your Pis
-├── 📁 bootstrap-image/       # ← Builds the SD card images
-└── 📁 docs/                 # ← Help guides if you get stuck
+├── 📁 discovery-service/     # ← Service that assigns names to your Pis  
+└── 📁 bootstrap-image/       # ← Builds the SD card images
 ```
 
 **You only need to work with these files:**
@@ -131,11 +130,11 @@ zstd -d result/sd-image/*.img.zst --stdout | sudo dd of=/dev/sdX bs=4M status=pr
 - Multiple export formats (PCAP, CSV, JSON)
 - Web dashboard for real-time monitoring
 
-⚙️ **Zero Maintenance**
+⚙️ **Easy Management**
 - Flash once, deploy anywhere
-- Automatic unique naming (`SENSOR-01`, `SENSOR-02`, etc.)
-- Update all sensors by pushing to Git
-- No manual configuration needed
+- Automatic unique naming (`SENSOR-01`, `SENSOR-02`, etc.)  
+- Centralized configuration via Git
+- No manual bootstrap configuration needed
 
 🔄 **Scales Easily**
 - Add more Pis without changing anything
@@ -218,7 +217,12 @@ cd discovery-service && python -m app.main
 ```bash
 # Update your sensor config repository
 git push origin main
-# All sensors will update automatically on next reboot
+
+# Then SSH into each sensor to apply updates:
+ssh root@sensor-01
+nixos-rebuild switch --flake "github:your-repo/nixos-pi-configs#sensor"
+
+# Note: Sensors do NOT auto-update - you must update each one manually
 ```
 
 ## 🛠️ **Troubleshooting**
@@ -231,22 +235,20 @@ git push origin main
 - Check discovery service logs: `docker-compose logs -f discovery-service`
 
 **Build fails:**
-- Follow [CachyOS setup guide](docs/cachyos-setup.md) for prerequisites
+- Install Nix and prerequisites first (see main README prerequisites section)
 - Run configuration first: `python3 setup_deployment.py`
 
 **Can't flash SD card:**
 - Check if SD card is mounted: `umount /dev/sdX*` (replace sdX)
 - Use correct device name from `lsblk`
 
-**Need detailed help?** See [troubleshooting guide](docs/bootstrap-troubleshooting.md)
+**Need more help?** Check the component-specific README files for detailed troubleshooting.
 
 ---
 
 ## ❓ **Need More Help?**
 
-- **[CachyOS Setup Guide](docs/cachyos-setup.md)** - Install prerequisites
-- **[Troubleshooting Guide](docs/bootstrap-troubleshooting.md)** - Fix common issues
-- **[Discovery Service Guide](discovery-service/README.md)** - Service details
-- **[Image Builder Guide](bootstrap-image/README.md)** - Build details
+- **[Discovery Service Guide](discovery-service/README.md)** - Service setup and troubleshooting
+- **[Image Builder Guide](bootstrap-image/README.md)** - Build process and common issues
 
-**This system is designed to "just work" - if it doesn't, the guides above will help!**
+**This system is designed to "just work" - if it doesn't, check the component guides above!**

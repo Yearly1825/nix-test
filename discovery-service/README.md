@@ -77,4 +77,4 @@ docker-compose logs -f discovery-service
 - Verify discovery service IP is reachable from Pi's network
 - Check logs for error messages
 
-**Need more help?** See the [main troubleshooting guide](../docs/bootstrap-troubleshooting.md).
+**Need more help?** Check the main README or bootstrap-image README for additional troubleshooting.
