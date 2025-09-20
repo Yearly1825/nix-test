@@ -7,9 +7,9 @@ pydantic==2.5.0
 cryptography==41.0.7
 pyyaml==6.0.1
 
-# Optional dependency for NTFY notifications
-# Gracefully degrades if not available
-# httpx==0.25.2
+# Dependencies for HTTP requests and NTFY notifications
+requests==2.31.0
+httpx==0.25.2
 
 # Removed dependencies (available in original requirements.txt):
 # - slowapi (rate limiting removed)
