@@ -124,11 +124,11 @@ zstd -d result/sd-image/*.img.zst --stdout | sudo dd of=/dev/sdX bs=4M status=pr
 - All traffic goes through your VPN
 - SSH access with your public keys only
 
-📡 **Professional Monitoring**
-- Kismet wireless packet analysis
-- GPS location tracking (if available)
-- Multiple export formats (PCAP, CSV, JSON)
-- Web dashboard for real-time monitoring
+📡 **Flexible Configuration**
+- Deploy any NixOS configuration automatically
+- Centralized configuration management via Git
+- Secure distribution of credentials and keys
+- Real-time bootstrap status monitoring
 
 ⚙️ **Easy Management**
 - Flash once, deploy anywhere
