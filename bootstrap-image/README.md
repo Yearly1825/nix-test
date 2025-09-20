@@ -4,9 +4,7 @@ Builds NixOS SD card images for Raspberry Pi with integrated discovery service s
 
 ## Quick Start
 
-### 🎯 **Unified Configuration (Recommended)**
-
-Use the simplified build process with shared configuration:
+Use the unified configuration system for streamlined builds:
 
 ```bash
 # 1. Configure deployment (if not done already)
@@ -18,61 +16,11 @@ cd bootstrap-image && ./build.sh
 
 **✅ Benefits:** No parameters needed, NTFY testing, shared configuration
 
-### 📋 **Legacy Methods (Alternative)**
 
-#### Method 1: Parameter-based Build Script
-
-```bash
-# Generate PSK
-python3 ../discovery-service/generate_psk.py
-
-# Build image
-./build-image.sh -p <your-64-char-psk>
-```
-
-#### Method 2: Direct Nix Commands
-
-```bash
-# Set your parameters
-export DISCOVERY_PSK="your-64-char-hex-psk"
-export DISCOVERY_SERVICE_IP="192.168.1.100" 
-export CONFIG_REPO_URL="github:yourusername/nixos-pi-configs"
-
-# Build directly with nix
-nix build .#bootstrap-image --show-trace
-```
-
-## Build Methods Comparison
-
-| Method | Pros | Cons | Best For |
-|--------|------|------|----------|
-| **Build Script** | Parameter validation, cross-platform detection, user-friendly | Less transparent, script dependency | First-time users, development |
-| **Direct Nix** | Full transparency, easy CI/CD integration, no hidden logic | Manual parameter handling, platform detection | CI/CD, advanced users |
-| **Flake Helpers** | Automatic platform detection, transparent, consistent | Requires understanding of flake structure | Power users, automation |
-
-📖 **For complete transparency, see [Bootstrap Commands](../docs/bootstrap-commands.md) for all direct build commands.**
 
 ## Cross-Platform Building
 
-### From x86_64 (CachyOS, most desktops) → aarch64 (Raspberry Pi)
-
-**Using Build Script:**
-```bash
-./build-image.sh -p <psk>  # Automatically detects cross-compilation
-```
-
-**Using Direct Nix Commands:**
-```bash
-# Set environment variables first
-export DISCOVERY_PSK="your-psk"
-export DISCOVERY_SERVICE_IP="192.168.1.100"
-
-# Required arguments for cross-compilation
-nix build .#bootstrap-image \
-  --system aarch64-linux \
-  --extra-platforms aarch64-linux \
-  --show-trace
-```
+The build script automatically detects your platform and handles cross-compilation from x86_64 to aarch64 (Raspberry Pi). No manual configuration needed.
 
 ### CachyOS Prerequisites and Setup
 
@@ -129,80 +77,26 @@ The build script automatically detects CachyOS and adds stability flags (`--opti
 ### Build Script Options
 
 ```bash
-./build-image.sh [OPTIONS]
+./build.sh [OPTIONS]
 
 Options:
-  -p, --psk <PSK>      Discovery service PSK (required)
-  -i, --ip <IP>        Discovery service IP (default: 192.168.1.100)
-  -r, --repo <REPO>    Config repository URL
+  --ntfy-test          Test NTFY notifications before building
   -o, --output <DIR>   Output directory (default: ./result)
   -h, --help           Show help
 ```
 
-## Direct Nix Commands Reference
 
-### Environment Variable Method
-
-```bash
-# Set parameters
-export DISCOVERY_PSK="your-psk"
-export DISCOVERY_SERVICE_IP="192.168.1.100"
-export CONFIG_REPO_URL="github:user/repo"
-
-# Native build (aarch64 host)
-nix build .#bootstrap-image
-
-# Cross-compilation (x86_64 → aarch64)  
-nix build .#bootstrap-image \
-  --system aarch64-linux \
-  --extra-platforms aarch64-linux
-```
-
-### Inline Parameter Method
-
-```bash
-# Build with inline parameters
-nix build --expr '
-let
-  flake = builtins.getFlake (toString ./.);
-in
-(flake.lib.buildBootstrapImage {
-  discoveryPsk = "your-psk";
-  discoveryServiceIp = "192.168.1.100"; 
-  configRepoUrl = "github:user/repo";
-}).config.system.build.sdImage' \
---system aarch64-linux \
---extra-platforms aarch64-linux
-```
-
-### Using Nix with Arguments
-
-```bash
-nix build .#packages.aarch64-linux.default \
-  --override-input discoveryPsk "your-psk" \
-  --override-input discoveryServiceIp "192.168.1.100"
-```
 
 ## Development Workflow
 
-### 1. Generate PSK
+### 1. Configure Deployment
 ```bash
-cd ../discovery-service
-python3 generate_psk.py
-# Copy the generated PSK
+cd .. && python3 setup_deployment.py
 ```
 
-### 2. Test Build (choose one method)
-
-**Script method:**
+### 2. Build Image
 ```bash
-./build-image.sh -p <psk> -i <ip> -r <repo>
-```
-
-**Direct method:**
-```bash
-DISCOVERY_PSK=<psk> DISCOVERY_SERVICE_IP=<ip> \
-nix build .#custom-bootstrap.config.system.build.sdImage --show-trace
+./build.sh
 ```
 
 ### 3. Flash Image
@@ -252,7 +146,7 @@ For detailed troubleshooting, see:
 
 **Build fails on CachyOS:** The build script automatically adds stability flags (`--option sandbox false --max-jobs 1`)
 
-**PSK validation fails:** Use unified configuration:
+**Configuration issues:** Use unified configuration:
 ```bash
 cd .. && python3 setup_deployment.py
 ```
@@ -264,7 +158,7 @@ cd .. && python3 setup_deployment.py
 ⚠️ **Important:** The built image contains your PSK embedded in the filesystem.
 
 **Best Practices:**
-- Generate unique PSK per deployment
+- Generate unique PSK per deployment  
 - Limit physical access to SD cards
 - Rotate PSKs periodically
 - Don't share built images
@@ -273,47 +167,22 @@ cd .. && python3 setup_deployment.py
 
 ### Custom Output Location
 ```bash
-nix build .#custom-bootstrap.config.system.build.sdImage -o custom-image
+./build.sh -o custom-image
 ```
 
 ### Debug Build
 ```bash
-nix build .#custom-bootstrap.config.system.build.sdImage --show-trace --verbose
-```
-
-### Build for Different Architectures
-```bash
-# For x86_64 testing (won't work on real Pi)
-nix build .#custom-bootstrap.config.system.build.sdImage --system x86_64-linux
-```
-
-### Integration with CI/CD
-
-**GitHub Actions example:**
-```yaml
-- name: Build Bootstrap Image
-  run: |
-    export DISCOVERY_PSK="${{ secrets.DISCOVERY_PSK }}"
-    nix build .#custom-bootstrap.config.system.build.sdImage \
-      --system aarch64-linux --extra-platforms aarch64-linux
-```
-
-**Makefile integration:**
-```makefile
-ARCH := $(shell uname -m)
-CROSS_ARGS := $(if $(filter-out aarch64,$(ARCH)),--system aarch64-linux --extra-platforms aarch64-linux)
-
-build:
-	nix build .#custom-bootstrap.config.system.build.sdImage $(CROSS_ARGS)
+# Add --show-trace to build.sh for detailed output
+nix build .#bootstrap-image --show-trace --verbose
 ```
 
 ## Files Overview
 
 | File | Purpose |
 |------|---------|
-| `flake-updated.nix` | Enhanced flake with parameter injection |
-| `configuration-updated.nix` | Bootstrap system configuration |
-| `build-image.sh` | User-friendly build script |
+| `flake.nix` | NixOS image definition with parameter injection |
+| `configuration.nix` | Bootstrap system configuration |
+| `build.sh` | Unified build script |
 | `README.md` | This documentation |
 
 ## Next Steps
