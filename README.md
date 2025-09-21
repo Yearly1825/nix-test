@@ -1,16 +1,21 @@
 # NixOS Raspberry Pi Sensor System
 
-A complete NixOS configuration for deploying Raspberry Pi 4 devices as network sensors with Kismet wireless monitoring, Netbird VPN connectivity, and secure SSH access.
+**Create a fleet of Raspberry Pi sensors that configure themselves automatically!**
 
-## 🎯 **Overview**
+Flash an SD card, plug in ethernet, and watch your Pi become a fully configured network sensor within minutes. No manual setup required.
 
-This project provides a **zero-touch deployment system** for Raspberry Pi sensor fleets. Flash an SD card, boot with ethernet, and devices automatically:
+## 🎯 **What This Does**
 
-- Register with a discovery service
-- Receive unique hostnames (`SENSOR-01`, `SENSOR-02`, etc.)
-- Download and apply configurations from your Git repository
-- Join your VPN automatically
-- Begin monitoring tasks
+Flash an SD card → Boot Pi with ethernet → **Done!**
+
+Your Pi will automatically:
+- Get a unique name (`SENSOR-01`, `SENSOR-02`, etc.)
+- Download its configuration from your Git repository
+- Join your VPN securely
+- Start monitoring network traffic
+- Send you notifications when ready
+
+Perfect for deploying multiple identical sensors across different locations.
 
 ## 🏗️ **Architecture**
 
@@ -38,130 +43,103 @@ This project provides a **zero-touch deployment system** for Raspberry Pi sensor
                     └─────────────────┘
 ```
 
-## 📦 **Repository Structure**
+## 📦 **What's In This Repository**
 
-This repository contains three main components:
+Three simple components that work together:
 
 ```
 nix-sensor/
-├── 📁 discovery-service/     # Registration and configuration service
-│   ├── README.md            # Setup and deployment guide
-│   ├── app/                 # FastAPI application
-│   │   ├── main.py          # API endpoints and routes
-│   │   ├── models.py        # Database models
-│   │   ├── config.py        # Configuration management
-│   │   ├── security.py      # PSK authentication
-│   │   ├── database.py      # Database operations
-│   │   ├── logging.py       # Logging configuration
-│   │   └── notifications.py # NTFY integration
-│   ├── client_example.py    # Example client implementation
-│   ├── bootstrap_client.py  # Bootstrap registration client
-│   ├── generate_psk.py      # PSK generation (deprecated)
-│   ├── docker-compose.yml   # Easy deployment
-│   ├── Dockerfile           # Container definition
-│   ├── requirements.txt     # Python dependencies
-│   ├── nginx.conf           # Reverse proxy config
-│   └── entrypoint.sh        # Container startup script
-│
-├── 📁 bootstrap-image/       # SD card image builder
-│   ├── README.md            # Build instructions and commands
-│   ├── build.sh             # Automated build script
-│   ├── flake.nix            # NixOS image definition
-│   ├── flake.lock           # Locked dependencies
-│   ├── configuration.nix    # Bootstrap system config
-│   ├── hardware-configuration.nix  # Pi hardware settings
-│   └── network-config.nix   # Ethernet bootstrap networking
-│
-├── 📁 docs/                 # Extended documentation
-│   ├── README.md            # Documentation hub
-│   ├── bootstrap-troubleshooting.md # Bootstrap debugging
-│   ├── bootstrap-walkthrough.md # Step-by-step guide
-│   ├── bootstrap-commands.md # Command reference
-│   ├── cachyos-setup.md     # CachyOS specific setup
-│   └── CachyOS Raspberry Pi Bootstrap Preparation
-│
-├── 📄 setup_deployment.py   # Unified configuration system
-└── 📄 README.md             # This overview (you are here)
+├── 📄 setup_deployment.py   # ← Start here! Configure everything
+├── 📁 discovery-service/     # ← Service that assigns names to your Pis  
+└── 📁 bootstrap-image/       # ← Builds the SD card images
 ```
+
+**You only need to work with these files:**
+- `setup_deployment.py` - One-time configuration
+- `discovery-service/` - Start the naming service
+- `bootstrap-image/` - Build SD card images
 
 ## 🚀 **Quick Start**
 
-### **🎯 Unified Setup (Recommended)**
+**Total time: ~30 minutes** (most of it is waiting for downloads)
 
-Configure everything from one place with the unified configuration system:
+### **Step 1: Configure Everything** ⚙️
 
 ```bash
-# 1. Interactive setup - configures discovery service AND bootstrap images
+# Run the setup wizard - it asks questions and sets everything up
 python3 setup_deployment.py
+```
 
-# 2. Deploy discovery service
-cd discovery-service && docker-compose up -d
+This wizard will:
+- Generate security keys
+- Ask for your VPN settings
+- Set up your SSH keys
+- Test notifications (optional)
 
-# 3. Build bootstrap image (reads shared config automatically)
-cd ../bootstrap-image && ./build.sh
+### **Step 2: Start the Discovery Service** 🚀
 
-# 4. Flash and deploy (compressed image)
+Choose **Option A** (with Docker) or **Option B** (without Docker):
+
+#### **Option A: With Docker (Easier)**
+```bash
+cd discovery-service
+docker-compose up -d
+```
+
+#### **Option B: Without Docker**
+```bash
+cd discovery-service
+pip install -r requirements.txt
+python -m app.main
+```
+
+### **Step 3: Build Your SD Card Image** 💿
+
+```bash
+cd bootstrap-image
+./build.sh
+```
+
+This creates a custom SD card image with your settings built-in.
+
+### **Step 4: Flash and Boot** ⚡
+
+```bash
+# Find your SD card (replace sdX with your actual device like sdb, sdc, etc.)
+lsblk
+
+# Flash the image (CAUTION: This erases the SD card!)
 zstd -d result/sd-image/*.img.zst --stdout | sudo dd of=/dev/sdX bs=4M status=progress
+
+# Insert SD card in Pi, connect ethernet cable, power on
+# Pi will automatically configure itself in ~10 minutes
 ```
 
-**✅ Benefits:** No copy-paste errors, NTFY notifications, single source of truth
+**That's it!** Your Pi will appear in your discovery service logs and join your VPN automatically.
 
-### **📋 Manual Setup (Alternative)**
+## ✨ **What You Get**
 
-For manual configuration or CI/CD workflows:
+🔐 **Secure by Default**
+- Each Pi gets unique encryption keys
+- All traffic goes through your VPN
+- SSH access with your public keys only
 
-**Step 1: Discovery Service**
-```bash
-cd discovery-service/
-python3 generate_psk.py  # DEPRECATED: Use unified setup instead
-# Edit config/config.yaml with your settings - DEPRECATED
-docker-compose up -d     # Start the service
-```
+📡 **Flexible Configuration**
+- Deploy any NixOS configuration automatically
+- Centralized configuration management via Git
+- Secure distribution of credentials and keys
+- Real-time bootstrap status monitoring
 
-**Note:** The `generate_psk.py` script is deprecated. Use the unified configuration system for new deployments.
+⚙️ **Easy Management**
+- Flash once, deploy anywhere
+- Automatic unique naming (`SENSOR-01`, `SENSOR-02`, etc.)  
+- Centralized configuration via Git
+- No manual bootstrap configuration needed
 
-**Step 2: Bootstrap Images**
-```bash
-cd bootstrap-image/
-# DEPRECATED: Use ./build.sh without parameters (reads .deployment.yaml)
-./build.sh  # Build with unified config
-```
-
-**Step 3: Flash and Deploy**
-```bash
-# For compressed images (default)
-zstd -d result/sd-image/*.img.zst --stdout | sudo dd of=/dev/sdX bs=4M status=progress
-# Or for uncompressed images
-sudo dd if=result/*.img of=/dev/sdX bs=4M status=progress
-# Insert SD card in Pi, connect ethernet, power on
-# Watch discovery service logs for registration
-```
-
-## ✨ **Key Features**
-
-### **🔐 Security-First Design**
-- **PSK Authentication**: Pre-shared keys burned into images
-- **Encrypted Payloads**: AES-256-GCM for sensitive configuration
-- **SSH Hardening**: Public key only, fail2ban protection
-- **VPN-First**: All sensors join secure Netbird VPN
-
-### **📡 Network Monitoring**
-- **Kismet**: Professional wireless packet analysis
-- **GPS Integration**: Location-aware monitoring
-- **Multiple Formats**: PCAPNG, CSV, JSON output
-- **Web Interface**: Real-time monitoring dashboard
-
-### **⚙️ Automated Management**
-- **Zero-Touch Deploy**: Flash, boot, done
-- **Sequential Naming**: Automatic hostname assignment
-- **Config Management**: Git-based configuration
-- **Remote Updates**: NixOS declarative rebuilds
-
-### **🔄 Scalable Architecture**
-- **Horizontal Scaling**: Add Pis without config changes
-- **Centralized Control**: Single discovery service
-- **Stateless Nodes**: Identical, replaceable sensors
-- **Rolling Updates**: Update all nodes from Git
+🔄 **Scales Easily**
+- Add more Pis without changing anything
+- One discovery service handles hundreds of devices
+- Identical, replaceable sensors
 
 ## 📋 **Requirements & Installation**
 
@@ -193,114 +171,84 @@ sudo usermod -aG docker $USER
 # Reboot or re-login for group changes to take effect
 ```
 
-**For detailed CachyOS setup instructions, see: [CachyOS Setup Guide](docs/cachyos-setup.md)**
+### **What You Need**
 
-### **System Requirements**
-
-### **Discovery Service Host**
-- Linux system with Docker
-- Network accessible to sensors
-- ~100MB RAM, minimal CPU
-
-### **Build Machine**
-- Nix package manager with flakes enabled
-- ARM64 emulation support (QEMU)
+**Your Computer** (to build images):
+- Linux (CachyOS/Arch recommended, but any works)
 - 8GB+ free disk space
 - SD card reader
+- Internet connection
 
-### **Target Hardware**
-- Raspberry Pi 4 (2GB+ RAM)
+**Discovery Service** (can be same computer):
+- Any Linux system
+- Docker (optional - can run without it)
+- Accessible from your network
+
+**Raspberry Pis**:
+- Raspberry Pi 4 (2GB+ RAM recommended)
 - 16GB+ SD cards
-- Ethernet connection (required for bootstrap)
+- **Ethernet cable required** (WiFi disabled during setup for security)
 
-## 📚 **Documentation**
+## 🆘 **Getting Help**
 
-### **Component Guides**
-- **[Discovery Service Setup](discovery-service/README.md)** - FastAPI service deployment and configuration
-- **[Bootstrap Image Builder](bootstrap-image/README.md)** - SD card image creation and commands
+**Something not working?** Check these in order:
+   - [Discovery Service](discovery-service/README.md)
+   - [Bootstrap Images](bootstrap-image/README.md)
 
-### **Configuration Reference**
-- **[Unified Configuration](setup_deployment.py)** - Single configuration system for all components
-- **[Network Configuration](bootstrap-image/network-config.nix)** - Ethernet-only bootstrap networking
-- **[Hardware Support](bootstrap-image/hardware-configuration.nix)** - Raspberry Pi hardware settings
-- **[NixOS Image Definition](bootstrap-image/flake.nix)** - Complete system configuration
+## 🔧 **Daily Operations**
 
-### **Extended Documentation**
-- **[Documentation Hub](docs/README.md)** - Extended guides and references
-- **[CachyOS Setup Guide](docs/cachyos-setup.md)** - Host system preparation
-- **[Bootstrap Troubleshooting](docs/bootstrap-troubleshooting.md)** - Common issues and solutions
-
-## 🔧 **Development Workflow**
-
-### **Initial Setup**
+### **Deploy More Sensors**
 ```bash
-# 1. Clone repository
-git clone <your-repo-url>
-cd nix-sensor
-
-# 2. Configure deployment (unified setup)
-python3 setup_deployment.py
-
-# 3. Start discovery service
-cd discovery-service && docker-compose up -d
-
-# 4. Build bootstrap image (reads unified config)
-cd ../bootstrap-image && ./build.sh
-```
-
-### **Sensor Deployment**
-```bash
-# Flash SD card (compressed image). Change "sdX" to match your SD Card
+# Just flash more SD cards with the same image!
 zstd -d result/sd-image/*.img.zst --stdout | sudo dd of=/dev/sdX bs=4M status=progress
-
-# Monitor registration
-cd ../discovery-service
-docker-compose logs -f
+# Each Pi gets a unique name automatically
 ```
 
-### **Configuration Updates**
+### **Monitor Your Fleet**
+```bash
+# Check discovery service logs
+docker-compose logs -f discovery-service
+
+# Or without Docker:
+cd discovery-service && python -m app.main
+```
+
+### **Update All Sensors**
 ```bash
 # Update your sensor config repository
 git push origin main
 
-# Sensors will pull updates on next rebuild
-# Or trigger remote rebuild via SSH
+# Then SSH into each sensor to apply updates:
+ssh root@sensor-01
+nixos-rebuild switch --flake "github:your-repo/nixos-pi-configs#sensor"
+
+# Note: Sensors do NOT auto-update - you must update each one manually
 ```
 
 ## 🛠️ **Troubleshooting**
 
-### **Common Issues**
+**Something not working? Here's what to check:**
 
-| Problem | Solution |
-|---------|----------|
-| Pi not registering | Check ethernet connection and discovery service logs |
-| Build fails | See [build troubleshooting](bootstrap-image/README.md#troubleshooting) |
-| Network timeout | Verify DHCP and internet connectivity |
-| PSK errors | Regenerate PSK and rebuild images |
+**Pi not appearing in logs:**
+- Is ethernet cable connected?
+- Is discovery service running? (`curl http://localhost:8080/health`)
+- Check discovery service logs: `docker-compose logs -f discovery-service`
 
-### **Debug Commands**
+**Build fails:**
+- Install Nix and prerequisites first (see main README prerequisites section)
+- Run configuration first: `python3 setup_deployment.py`
 
-```bash
-# Check discovery service status
-curl http://<discovery-ip>:8080/health
+**Can't flash SD card:**
+- Check if SD card is mounted: `umount /dev/sdX*` (replace sdX)
+- Use correct device name from `lsblk`
 
-# Monitor sensor bootstrap (via SSH)
-ssh root@<sensor-ip>  # password: bootstrap
-journalctl -f -u pi-bootstrap
-
-# View discovery service logs
-docker-compose logs -f discovery-service
-```
-
-## 🤝 **Contributing**
-
-Contributions welcome! Please:
-
-1. Fork the repository
-2. Create a feature branch
-3. Test on actual hardware
-4. Submit a pull request
+**Need more help?** Check the component-specific README files for detailed troubleshooting.
 
 ---
 
-**💡 Pro Tip**: Start with the [Discovery Service README](discovery-service/README.md) for your first deployment, then move to [Bootstrap Image Builder](bootstrap-image/README.md) for creating SD card images.
+## ❓ **Need More Help?**
+
+- **[Discovery Service Guide](discovery-service/README.md)** - Service setup and troubleshooting
+- **[Image Builder Guide](bootstrap-image/README.md)** - Build process and common issues
+
+**This system is designed to "just work" - if it doesn't, check the component guides above!**
