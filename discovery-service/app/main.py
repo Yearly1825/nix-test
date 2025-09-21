@@ -61,9 +61,7 @@ def create_app(config_path: str = None) -> FastAPI:
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
 
-    # Debug: Log PSK info (first 16 chars only for security)
-    logger = logging.getLogger(__name__)
-    logger.info(f"Discovery service starting with PSK: {config.discovery_service.psk[:16]}... ({len(config.discovery_service.psk)} chars)")
+
 
     # Create FastAPI app
     app = FastAPI(
@@ -92,16 +90,12 @@ async def register_device(request: Request, reg_request: RegistrationRequest):
 
     try:
         # Verify signature (simplified - no timestamp validation)
-        data_to_sign = f"{reg_request.serial}:{reg_request.mac}"
-        logging.info(f"Signature verification for {client_ip}: data='{data_to_sign}', received_sig={reg_request.signature[:16]}...")
-
         if not security.verify_registration_request(
             reg_request.serial,
             reg_request.mac,
             reg_request.signature
         ):
             logging.warning(f"Invalid signature from {client_ip} for device {reg_request.serial}")
-            logging.warning(f"Data signed: '{data_to_sign}', MAC: {reg_request.mac}")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid signature"
