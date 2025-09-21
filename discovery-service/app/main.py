@@ -219,7 +219,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
-        "app.simple_main:app",
+        "app.main:app",
         host=config.api.host,
         port=config.api.port,
         reload=False,
