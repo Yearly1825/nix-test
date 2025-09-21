@@ -240,6 +240,7 @@ class DatabaseManager:
     def _init_database(self):
         """Initialize simplified database schema (single table)"""
         with self._get_connection() as conn:
+            # Create table
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS registrations (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -249,11 +250,12 @@ class DatabaseManager:
                     registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     confirmed_at TIMESTAMP NULL,
                     status TEXT DEFAULT 'pending'
-                );
-
-                CREATE INDEX IF NOT EXISTS idx_registrations_serial ON registrations(serial);
-                CREATE INDEX IF NOT EXISTS idx_registrations_hostname ON registrations(hostname);
+                )
             """)
+
+            # Create indexes separately
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_registrations_serial ON registrations(serial)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_registrations_hostname ON registrations(hostname)")
 
     @contextmanager
     def _get_connection(self):
