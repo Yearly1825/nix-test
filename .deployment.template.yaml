@@ -13,7 +13,6 @@
 # Generate PSK (choose one method):
 #   Python: python3 -c "import secrets; print(secrets.token_hex(32))"
 #   Bash:   openssl rand -hex 32
-#   Script: cd discovery-service && python3 generate_psk.py
 
 # =============================================================================
 # DEPLOYMENT INFORMATION
@@ -22,13 +21,6 @@ deployment:
   # Hostname prefix for sensors (will become SENSOR-01, SENSOR-02, etc)
   # Examples: HOMELAB, OFFICE, WAREHOUSE, LAB
   name: "SENSOR"
-
-  # Environment identifier (for organization)
-  # Examples: production, development, testing
-  environment: "production"
-
-  # Human-readable description of this deployment
-  description: "Raspberry Pi Sensor Network"
 
 # =============================================================================
 # DISCOVERY SERVICE CONFIGURATION
@@ -46,10 +38,6 @@ discovery_service:
   # Generate with: python3 -c "import secrets; print(secrets.token_hex(32))"
   # Generate with: openssl rand -hex 32
   psk: "CHANGE_ME_TO_RANDOM_64_CHAR_HEX_STRING"
-
-  # Admin API token for protected endpoints (for future use)
-  # Generate with: python3 -c "import secrets; print(secrets.token_urlsafe(32))"
-  admin_token: "CHANGE_ME_ADMIN_TOKEN"
 
 # =============================================================================
 # SENSOR CONFIGURATION REPOSITORY
@@ -94,52 +82,12 @@ ntfy:
   # Authentication type: none, basic, bearer
   auth_type: "none"
 
-  # Basic authentication (only used if auth_type: basic)
-  username: ""
-  password: ""
-
-  # Bearer token authentication (only used if auth_type: bearer)
-  # token: "your-bearer-token-here"
-
   # Message priority for notifications
   # Options: min, low, default, high, urgent
   priority: "default"
 
   # Message tags for categorization
   tags: ["raspberry-pi", "bootstrap", "sensors"]
-
-  # Retry settings for failed notifications
-  retry_attempts: 3
-  timeout_seconds: 10
-
-# =============================================================================
-# DISCOVERY SERVICE SECURITY SETTINGS
-# =============================================================================
-security:
-  # Maximum registration attempts per IP address per hour
-  max_requests_per_ip: 10
-
-  # Maximum registration attempts per device per hour
-  max_requests_per_device: 3
-
-  # HMAC signature validity window in seconds (5 minutes = 300)
-  signature_window_seconds: 300
-
-# =============================================================================
-# LOGGING CONFIGURATION
-# =============================================================================
-logging:
-  # Log level: DEBUG, INFO, WARNING, ERROR
-  level: "INFO"
-
-  # Log file path (relative to discovery-service directory)
-  file: "logs/discovery.log"
-
-  # Maximum log file size before rotation (MB)
-  max_size_mb: 10
-
-  # Number of backup log files to keep
-  backup_count: 5
 
 # =============================================================================
 # DATABASE CONFIGURATION
