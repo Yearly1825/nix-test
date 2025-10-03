@@ -266,12 +266,10 @@
               self.server_url = server_url.rstrip('/')
               self.psk = psk.encode() if isinstance(psk, str) else psk
 
-          def _create_signature(self, data: str, timestamp: int = None):
-              if timestamp is None:
-                  timestamp = int(time.time())
-              message = f"{data}:{timestamp}".encode()
-              signature = hmac.new(self.psk, message, hashlib.sha256).hexdigest()
-              return signature, timestamp
+          def _create_signature(self, data: str):
+              """Create HMAC signature for data (simplified - no timestamp)"""
+              signature = hmac.new(self.psk, data.encode(), hashlib.sha256).hexdigest()
+              return signature
 
           def _derive_device_key(self, device_serial: str):
               salt = device_serial.encode().ljust(32, b'\x00')[:32]
@@ -291,8 +289,8 @@
 
           def register_device(self, serial: str, mac: str):
               data = f"{serial}:{mac}"
-              signature, timestamp = self._create_signature(data)
-              payload = {"serial": serial, "mac": mac, "signature": signature, "timestamp": timestamp}
+              signature = self._create_signature(data)
+              payload = {"serial": serial, "mac": mac, "signature": signature}
               response = requests.post(f"{self.server_url}/register", json=payload, timeout=30)
               response.raise_for_status()
               result = response.json()
@@ -301,8 +299,8 @@
 
           def confirm_bootstrap(self, serial: str, hostname: str, status: str, error_message: str = None):
               data = f"{serial}:{hostname}"
-              signature, timestamp = self._create_signature(data)
-              payload = {"serial": serial, "hostname": hostname, "signature": signature, "timestamp": timestamp, "status": status, "error_message": error_message}
+              signature = self._create_signature(data)
+              payload = {"serial": serial, "hostname": hostname, "signature": signature, "status": status, "error_message": error_message}
               try:
                   response = requests.post(f"{self.server_url}/confirm", json=payload, timeout=30)
                   response.raise_for_status()
