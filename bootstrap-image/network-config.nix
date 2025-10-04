@@ -8,15 +8,10 @@
     # Use dhcpcd for deterministic routing metrics (prevents cellular modem from taking priority)
     useDHCP = false;
 
-    # Configure eth0 with low metric to ensure it's always preferred over cellular modems
-    interfaces.eth0 = {
-      useDHCP = true;
-      ipv4.routes = [{
-        options = { metric = 10; };
-      }];
-    };
+    # Enable DHCP on eth0
+    interfaces.eth0.useDHCP = true;
 
-    # Set metric via dhcpcd for reliability
+    # Set metric via dhcpcd to ensure ethernet is always preferred over cellular modems
     dhcpcd.extraConfig = ''
       # Ethernet always gets metric 10 (highest priority)
       interface eth0
