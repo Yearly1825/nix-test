@@ -36,7 +36,7 @@ python -m app.main
 
 1. **Authentication** - Pi proves it's yours using a secret key
 2. **Name Assignment** - Gets next available name (`SENSOR-01`, `SENSOR-02`, etc.)  
-3. **Secure Delivery** - Receives encrypted VPN keys and SSH keys
+3. **Secure Delivery** - Receives encrypted VPN keys, SSH keys, and NTFY config
 4. **Confirmation** - Pi reports back when setup is complete
 
 **Built-in endpoints:**

@@ -127,7 +127,16 @@ async def register_device(request: Request, reg_request: RegistrationRequest):
         config_payload = {
             "netbird_setup_key": config.netbird.setup_key,
             "ssh_keys": config.ssh_keys,
-            "timestamp": int(time.time())
+            "timestamp": int(time.time()),
+            "ntfy_config": {
+                "url": config.ntfy.url,
+                "auth_type": config.ntfy.auth_type,
+                "username": config.ntfy.username if config.ntfy.auth_type == "basic" else "",
+                "password": config.ntfy.password if config.ntfy.auth_type == "basic" else "",
+                "token": config.ntfy.token if config.ntfy.auth_type == "bearer" else "",
+                "priority": config.ntfy.priority,
+                "tags": config.ntfy.tags
+            } if config.ntfy.enabled else None
         }
 
         encrypted_config = security.encrypt_payload(config_payload, reg_request.serial)

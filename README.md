@@ -129,6 +129,7 @@ zstd -d result/sd-image/*.img.zst --stdout | sudo dd of=/dev/sdX bs=4M status=pr
 - Centralized configuration management via Git
 - Secure distribution of credentials and keys
 - Real-time bootstrap status monitoring
+- Boot notifications with network information
 
 ⚙️ **Easy Management**
 - Flash once, deploy anywhere

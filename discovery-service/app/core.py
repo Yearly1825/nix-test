@@ -56,6 +56,10 @@ class DatabaseConfig(BaseModel):
 class NTFYConfig(BaseModel):
     enabled: bool = Field(False, description="Enable NTFY notifications")
     url: str = Field("", description="NTFY topic URL")
+    auth_type: str = Field("none", description="Authentication type: none, basic, bearer")
+    username: str = Field("", description="Username for basic auth")
+    password: str = Field("", description="Password for basic auth")
+    token: str = Field("", description="Bearer token")
     priority: str = Field("default", description="Message priority")
     tags: List[str] = Field(default_factory=lambda: ["raspberry-pi", "bootstrap"])
 
