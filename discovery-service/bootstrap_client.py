@@ -137,6 +137,7 @@ class BootstrapClient:
             'hostname': result['hostname'],
             'netbird_setup_key': config['netbird_setup_key'],
             'ssh_keys': config['ssh_keys'],
+            'ntfy_config': config.get('ntfy_config'),
             'config_timestamp': config['timestamp']
         }
 
