@@ -399,7 +399,7 @@ class NTFYNotifier:
         """Notify successful device registration"""
         import datetime
 
-        title = "Discovery Service: Device Registration"
+        title = f"Discovery Service: Device Registration ({hostname})"
 
         # Format timestamp
         timestamp = datetime.datetime.fromtimestamp(config_payload['timestamp']).strftime('%Y-%m-%d %H:%M:%S')
@@ -429,9 +429,9 @@ Status: Bootstrapping in progress"""
     async def notify_confirmation(self, hostname: str, serial: str, status: str):
         """Notify device bootstrap confirmation"""
         if status == "success":
-            title = "Device Bootstrap Complete"
+            title = f"Discovery Service: Bootstrap Complete ({hostname})"
             message = f"Device: {hostname}\nSerial: {serial}\nStatus: Bootstrap successful!"
         else:
-            title = "Device Bootstrap Failed"
+            title = f"Discovery Service: Bootstrap Failed ({hostname})"
             message = f"Device: {hostname}\nSerial: {serial}\nStatus: Bootstrap failed"
         await self.send_notification(title, message)
