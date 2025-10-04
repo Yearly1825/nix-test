@@ -144,12 +144,8 @@ show_config_summary() {
     echo ""
 }
 
-# List removable block devices (potential SD cards)
-list_removable_devices() {
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo " 💾 AVAILABLE REMOVABLE DEVICES (Removable drives only)"
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-
+# Show removable block devices inline (no header/footer)
+show_removable_devices_inline() {
     # Check if lsblk is available (Linux only)
     if command -v lsblk &> /dev/null; then
         local found_devices=false
@@ -171,9 +167,6 @@ list_removable_devices() {
     else
         echo "  lsblk not available (non-Linux system)"
     fi
-
-    echo ""
-    echo ""
 }
 
 # Show usage information
@@ -320,15 +313,16 @@ main() {
             echo ""
             echo ""
 
-            # List removable devices
-            list_removable_devices
-
-            # Show flashing instructions
+            # Show flashing instructions with integrated device listing
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
             echo " ⚡ FLASH INSTRUCTIONS"
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
             echo ""
-            echo "  Replace /dev/sdX with your actual device path from the table above"
+            echo "  Available Removable Devices:"
+            echo "  ──────────────────────────────────────────────────────────────────────────────"
+            show_removable_devices_inline
+            echo ""
+            echo "  ⚠️  Replace /dev/sdX below with your device from the table above"
             echo ""
             echo "  # Verify device:"
             echo "  lsblk /dev/sdX"
