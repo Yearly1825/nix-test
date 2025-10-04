@@ -1,6 +1,3 @@
-#!/usr/bin/env bash
-set -euo pipefail
-
 # Simplified build script that reads from unified deployment configuration
 # Uses .deployment.yaml from the root directory
 
@@ -22,7 +19,6 @@ check_dependencies() {
         log_error "python3 is required to parse configuration"
         exit 1
     fi
-
     if ! python3 -c "import yaml" 2>/dev/null; then
         log_info "Installing PyYAML for configuration parsing..."
         python3 -m pip install --user PyYAML
@@ -32,7 +28,6 @@ check_dependencies() {
 # Parse configuration from .deployment.yaml
 parse_config() {
     local config_file="../.deployment.yaml"
-
     if [ ! -f "$config_file" ]; then
         log_error "Deployment configuration not found: $config_file"
         log_error ""
@@ -70,7 +65,6 @@ try:
     if not psk or psk.startswith('CHANGE_ME'):
         print('ERROR: PSK not configured in .deployment.yaml', file=sys.stderr)
         sys.exit(1)
-
     if not repo or repo.startswith('CHANGE_ME'):
         print('ERROR: Config repository not configured in .deployment.yaml', file=sys.stderr)
         sys.exit(1)
@@ -104,7 +98,6 @@ except Exception as e:
         log_error "Failed to parse deployment configuration"
         exit 1
     fi
-
     eval "$config_vars"
 
     # Validate PSK format
@@ -130,6 +123,63 @@ test_ntfy() {
             cd - > /dev/null
         fi
     fi
+}
+
+# Show configuration summary in a table
+show_config_summary() {
+    echo ""
+    echo "┌─────────────────────────┬────────────────────────────────────────────────────────┐"
+    printf "│ %-23s │ %-54s │\n" "Configuration" "Value"
+    echo "├─────────────────────────┼────────────────────────────────────────────────────────┤"
+    printf "│ %-23s │ %-54s │\n" "Deployment Name" "$DEPLOYMENT_NAME"
+    printf "│ %-23s │ %-54s │\n" "Discovery Service" "$DISCOVERY_SERVICE_IP:$DISCOVERY_SERVICE_PORT"
+    printf "│ %-23s │ %-54s │\n" "Config Repository" "$CONFIG_REPO_URL"
+    printf "│ %-23s │ %-54s │\n" "PSK (truncated)" "${DISCOVERY_PSK:0:16}...${DISCOVERY_PSK: -8}"
+    if [ "$NTFY_ENABLED" = "true" ]; then
+        printf "│ %-23s │ %-54s │\n" "NTFY Notifications" "✅ Enabled ($NTFY_URL)"
+    else
+        printf "│ %-23s │ %-54s │\n" "NTFY Notifications" "❌ Disabled"
+    fi
+    echo "└─────────────────────────┴────────────────────────────────────────────────────────┘"
+    echo ""
+}
+
+# List removable block devices (potential SD cards)
+list_removable_devices() {
+    echo ""
+    echo "┌─────────────────────────────────────────────────────────────────────────────────┐"
+    printf "│ %-79s │\n" "Available Removable Devices (Filtered: Removable drives only)"
+    echo "├──────────────┬─────────────┬──────────────────────────────────────────────────────┤"
+    printf "│ %-12s │ %-11s │ %-52s │\n" "Device" "Size" "Model"
+    echo "├──────────────┼─────────────┼──────────────────────────────────────────────────────┤"
+
+    # Check if lsblk is available (Linux only)
+    if command -v lsblk &> /dev/null; then
+        local found_devices=false
+        while IFS= read -r line; do
+            found_devices=true
+            # Parse lsblk output: NAME SIZE MODEL
+            local device=$(echo "$line" | awk '{print $1}')
+            local size=$(echo "$line" | awk '{print $2}')
+            local model=$(echo "$line" | awk '{for(i=3;i<=NF;i++) printf "%s ", $i; print ""}' | sed 's/ *$//')
+
+            # Truncate model if too long
+            if [ ${#model} -gt 52 ]; then
+                model="${model:0:49}..."
+            fi
+
+            printf "│ %-12s │ %-11s │ %-52s │\n" "/dev/$device" "$size" "$model"
+        done < <(lsblk -ndo NAME,SIZE,RM,MODEL | awk '$3=="1" {$3=""; print $0}')
+
+        if [ "$found_devices" = false ]; then
+            printf "│ %-79s │\n" "No removable devices detected"
+        fi
+    else
+        printf "│ %-79s │\n" "lsblk not available (non-Linux system)"
+    fi
+
+    echo "└──────────────┴─────────────┴──────────────────────────────────────────────────────┘"
+    echo ""
 }
 
 # Show usage information
@@ -203,18 +253,7 @@ main() {
     fi
 
     # Show build configuration
-    log_info "🏗️  Building with configuration:"
-    log_info "  Deployment:     $DEPLOYMENT_NAME"
-    log_info "  PSK:            ${DISCOVERY_PSK:0:16}... (truncated)"
-    log_info "  Service IP:     $DISCOVERY_SERVICE_IP:$DISCOVERY_SERVICE_PORT"
-    log_info "  Config Repo:    $CONFIG_REPO_URL"
-    log_info "  Output Dir:     $OUTPUT_DIR"
-    if [ "$NTFY_ENABLED" = "true" ]; then
-        log_info "  NTFY:           Enabled ($NTFY_URL)"
-    else
-        log_info "  NTFY:           Disabled"
-    fi
-    echo ""
+    show_config_summary
 
     # Set environment variables for the flake
     export DISCOVERY_PSK="$DISCOVERY_PSK"
@@ -224,7 +263,6 @@ main() {
     # Platform detection for cross-compilation
     HOST_ARCH=$(uname -m)
     CROSS_ARGS=""
-
     case "$HOST_ARCH" in
         x86_64)
             log_info "🔄 Cross-compiling from x86_64 to aarch64"
@@ -249,6 +287,8 @@ main() {
 
     # Build the image
     log_info "🔨 Starting build process..."
+    echo ""
+
     if nix build --expr "
       let
         flake = builtins.getFlake (toString ./.);
@@ -259,45 +299,79 @@ main() {
           configRepoUrl = \"$CONFIG_REPO_URL\";
         }).config.system.build.sdImage
     " --out-link "$OUTPUT_DIR" $CROSS_ARGS --show-trace --impure; then
-
+        echo ""
         log_info "✅ Build completed successfully!"
+        echo ""
 
         # Get the actual image path
         IMAGE_PATH=$(readlink -f "$OUTPUT_DIR")
 
-        # Look for image file
-        IMAGE_FILE=$(find "$IMAGE_PATH/sd-image" -name "*.img.zst" -o -name "*.img" 2>/dev/null | head -1)
+        # Look for image file (always .zst compressed)
+        IMAGE_FILE=$(find "$IMAGE_PATH/sd-image" -name "*.img.zst" 2>/dev/null | head -1)
         if [ -z "$IMAGE_FILE" ]; then
-            IMAGE_FILE=$(find "$IMAGE_PATH" -name "*.img.zst" -o -name "*.img" | head -1)
+            IMAGE_FILE=$(find "$IMAGE_PATH" -name "*.img.zst" | head -1)
         fi
 
         if [ -n "$IMAGE_FILE" ]; then
             IMAGE_SIZE=$(du -h "$IMAGE_FILE" | cut -f1)
-            log_info "📀 Image file: $IMAGE_FILE"
-            log_info "📏 Image size: $IMAGE_SIZE"
+
+            # Show image details
+            echo "┌─────────────────────────────────────────────────────────────────────────────────┐"
+            printf "│ %-79s │\n" "Image Details"
+            echo "├─────────────────────────────────────────────────────────────────────────────────┤"
+            printf "│ %-20s: %-56s │\n" "File" "$(basename "$IMAGE_FILE")"
+            printf "│ %-20s: %-56s │\n" "Path" "$IMAGE_FILE"
+            printf "│ %-20s: %-56s │\n" "Size" "$IMAGE_SIZE (compressed)"
+            printf "│ %-20s: %-56s │\n" "Format" "Zstandard compressed (.zst)"
+            echo "└─────────────────────────────────────────────────────────────────────────────────┘"
+
+            # List removable devices
+            list_removable_devices
+
+            # Show flashing instructions
+            echo "┌─────────────────────────────────────────────────────────────────────────────────┐"
+            printf "│ %-79s │\n" "Flash Instructions"
+            echo "├─────────────────────────────────────────────────────────────────────────────────┤"
+            printf "│ %-79s │\n" ""
+            printf "│ %-79s │\n" "  Replace /dev/sdX with your actual device path from the table above"
+            printf "│ %-79s │\n" ""
+            printf "│ %-79s │\n" "  # Verify device (double-check this is correct!):"
+            printf "│ %-79s │\n" "  lsblk /dev/sdX"
+            printf "│ %-79s │\n" ""
+            printf "│ %-79s │\n" "  # Unmount any mounted partitions:"
+            printf "│ %-79s │\n" "  sudo umount /dev/sdX*"
+            printf "│ %-79s │\n" ""
+            printf "│ %-79s │\n" "  # Flash the image:"
+            printf "│ %-79s │\n" "  zstd -d '$IMAGE_FILE' --stdout | \\"
+            printf "│ %-79s │\n" "    sudo dd of=/dev/sdX bs=4M status=progress conv=fsync"
+            printf "│ %-79s │\n" ""
+            echo "└─────────────────────────────────────────────────────────────────────────────────┘"
             echo ""
-            log_info "🎯 Next steps:"
-            if [[ "$IMAGE_FILE" == *.zst ]]; then
-                log_info "  1. Flash compressed image:"
-                log_info "     zstd -d '$IMAGE_FILE' --stdout | sudo dd of=/dev/sdX bs=4M status=progress"
-            else
-                log_info "  1. Flash to SD card:"
-                log_info "     sudo dd if='$IMAGE_FILE' of=/dev/sdX bs=4M status=progress"
-            fi
-            log_info "  2. Boot Raspberry Pi with ethernet connected"
-            log_info "  3. Monitor: cd ../discovery-service && docker-compose logs -f"
+
+            # Show next steps
+            echo "┌─────────────────────────────────────────────────────────────────────────────────┐"
+            printf "│ %-79s │\n" "Next Steps"
+            echo "├─────────────────────────────────────────────────────────────────────────────────┤"
+            printf "│ %-79s │\n" "  1. Flash SD card using the command above"
+            printf "│ %-79s │\n" "  2. Insert SD card into Raspberry Pi"
+            printf "│ %-79s │\n" "  3. Connect Raspberry Pi to ethernet"
+            printf "│ %-79s │\n" "  4. Power on the Raspberry Pi"
+            printf "│ %-79s │\n" "  5. Monitor discovery service logs:"
+            printf "│ %-79s │\n" "     cd ../discovery-service && docker-compose logs -f"
+            printf "│ %-79s │\n" ""
+            printf "│ %-79s │\n" "  Expected: Pi will auto-configure and register within 5-10 minutes"
+            printf "│ %-79s │\n" ""
+            echo "└─────────────────────────────────────────────────────────────────────────────────┘"
             echo ""
-            log_info "💡 This image contains PSK: ${DISCOVERY_PSK:0:16}..."
+            log_info "🎉 Bootstrap image build complete!"
         else
             log_warn "Build completed but could not find image file in $IMAGE_PATH"
         fi
-
     else
+        echo ""
         log_error "❌ Build failed!"
         exit 1
     fi
-
-    log_info "🎉 Bootstrap image build complete!"
 }
 
 # Run main function
