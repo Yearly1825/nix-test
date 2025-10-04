@@ -5,8 +5,6 @@ from typing import List, Optional
 
 class DeploymentConfig(BaseModel):
     name: str = Field(..., description="Hostname prefix")
-    environment: str = Field("production", description="Environment identifier")
-    description: str = Field("", description="Deployment description")
 
 class DiscoveryServiceConfig(BaseModel):
     ip: str = Field("10.42.0.1", description="Discovery service IP")

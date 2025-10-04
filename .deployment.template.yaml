@@ -23,13 +23,6 @@ deployment:
   # Examples: HOMELAB, OFFICE, WAREHOUSE, LAB
   name: "SENSOR"
 
-  # Environment identifier (for organization)
-  # Examples: production, development, testing
-  environment: "production"
-
-  # Human-readable description of this deployment
-  description: "Raspberry Pi Sensor Network"
-
 # =============================================================================
 # DISCOVERY SERVICE CONFIGURATION
 # =============================================================================

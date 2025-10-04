@@ -214,16 +214,8 @@ class DeploymentConfigurator:
         current_name = config.get('deployment', {}).get('name', 'SENSOR')
         name = input(f"  Deployment name [{current_name}]: ").strip() or current_name
 
-        current_env = config.get('deployment', {}).get('environment', 'production')
-        environment = input(f"  Environment [{current_env}]: ").strip() or current_env
-
-        current_desc = config.get('deployment', {}).get('description', 'Raspberry Pi Sensor Network')
-        description = input(f"  Description [{current_desc}]: ").strip() or current_desc
-
         config['deployment'] = {
-            'name': name,
-            'environment': environment,
-            'description': description
+            'name': name
         }
 
         print()
