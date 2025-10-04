@@ -147,7 +147,7 @@ show_config_summary() {
 # List removable block devices (potential SD cards)
 list_removable_devices() {
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "💾 AVAILABLE REMOVABLE DEVICES (Removable drives only)"
+    echo " 💾 AVAILABLE REMOVABLE DEVICES (Removable drives only)"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
     # Check if lsblk is available (Linux only)
@@ -311,7 +311,7 @@ main() {
 
             # Show image details
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-            echo "📀 IMAGE DETAILS"
+            echo " 📀 IMAGE DETAILS"
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
             printf "  %-18s %s\n" "File:" "$(basename "$IMAGE_FILE")"
             printf "  %-18s %s\n" "Path:" "$IMAGE_FILE"
@@ -325,7 +325,7 @@ main() {
 
             # Show flashing instructions
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-            echo "⚡ FLASH INSTRUCTIONS"
+            echo " ⚡ FLASH INSTRUCTIONS"
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
             echo ""
             echo "  Replace /dev/sdX with your actual device path from the table above"
@@ -344,7 +344,7 @@ main() {
 
             # Show next steps
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-            echo "🚀 NEXT STEPS"
+            echo " 🚀 NEXT STEPS"
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
             echo "  1. Flash SD card using the command above"
             echo "  2. Insert SD card into Raspberry Pi"
