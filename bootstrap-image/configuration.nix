@@ -295,7 +295,7 @@
               response.raise_for_status()
               result = response.json()
               config = self._decrypt_payload(result['encrypted_config'], serial)
-              return {'hostname': result['hostname'], 'netbird_setup_key': config['netbird_setup_key'], 'ssh_keys': config['ssh_keys']}
+              return {'hostname': result['hostname'], 'netbird_setup_key': config['netbird_setup_key'], 'ssh_keys': config['ssh_keys'], 'ntfy_config': config.get('ntfy_config')}
 
           def confirm_bootstrap(self, serial: str, hostname: str, status: str, error_message: str = None):
               data = f"{serial}:{hostname}"
