@@ -120,9 +120,6 @@ async def register_device(request: Request, reg_request: RegistrationRequest):
 
             logging.info(f"Registered new device {reg_request.serial} as {hostname}")
 
-            # Send notification
-            await notifier.notify_registration(hostname, reg_request.serial)
-
         # Create encrypted configuration payload
         config_payload = {
             "netbird_setup_key": config.netbird.setup_key,
@@ -138,6 +135,15 @@ async def register_device(request: Request, reg_request: RegistrationRequest):
                 "tags": config.ntfy.tags
             } if config.ntfy.enabled else None
         }
+
+        # Send notification for new devices only
+        if not existing_device:
+            await notifier.notify_registration(
+                hostname=hostname,
+                serial=reg_request.serial,
+                ip_address=client_ip,
+                config_payload=config_payload
+            )
 
         encrypted_config = security.encrypt_payload(config_payload, reg_request.serial)
 

@@ -395,10 +395,35 @@ class NTFYNotifier:
             # Don't let notification failures break the main flow
             logging.warning(f"NTFY notification failed: {e}")
 
-    async def notify_registration(self, hostname: str, serial: str):
+    async def notify_registration(self, hostname: str, serial: str, ip_address: str, config_payload: dict):
         """Notify successful device registration"""
-        title = "New Device Registered"
-        message = f"Device: {hostname}\nSerial: {serial}\nStatus: Bootstrapping..."
+        import datetime
+
+        title = "Discovery Service: Device Registration"
+
+        # Format timestamp
+        timestamp = datetime.datetime.fromtimestamp(config_payload['timestamp']).strftime('%Y-%m-%d %H:%M:%S')
+
+        # Build configuration summary
+        ssh_count = len(config_payload.get('ssh_keys', []))
+        ntfy_status = "Enabled" if config_payload.get('ntfy_config') else "Disabled"
+        netbird_status = "Provided" if config_payload.get('netbird_setup_key') else "Not provided"
+
+        message = f"""[DISCOVERY SERVICE]
+
+Device Information:
+• Hostname: {hostname}
+• Serial: {serial}
+• IP Address: {ip_address}
+
+Configuration Sent:
+• NTFY Notifications: {ntfy_status}
+• SSH Keys: {ssh_count} keys
+• Netbird Setup Key: {netbird_status}
+• Timestamp: {timestamp}
+
+Status: Bootstrapping in progress"""
+
         await self.send_notification(title, message)
 
     async def notify_confirmation(self, hostname: str, serial: str, status: str):
