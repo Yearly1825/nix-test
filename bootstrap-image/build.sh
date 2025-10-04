@@ -146,14 +146,15 @@ show_config_summary() {
 
 # List removable block devices (potential SD cards)
 list_removable_devices() {
-    echo "Available Removable Devices (Filtered: Removable drives only)"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "💾 AVAILABLE REMOVABLE DEVICES (Removable drives only)"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
     # Check if lsblk is available (Linux only)
     if command -v lsblk &> /dev/null; then
         local found_devices=false
-        printf "%-15s %-12s %s\n" "Device" "Size" "Model"
-        echo "────────────────────────────────────────────────────────────────────────────────"
+        printf "  %-15s %-12s %s\n" "Device" "Size" "Model"
+        echo "  ──────────────────────────────────────────────────────────────────────────────"
         while IFS= read -r line; do
             found_devices=true
             # Parse lsblk output: NAME SIZE MODEL
@@ -161,17 +162,17 @@ list_removable_devices() {
             local size=$(echo "$line" | awk '{print $2}')
             local model=$(echo "$line" | awk '{for(i=3;i<=NF;i++) printf "%s ", $i; print ""}' | sed 's/ *$//')
 
-            printf "%-15s %-12s %s\n" "/dev/$device" "$size" "$model"
+            printf "  %-15s %-12s %s\n" "/dev/$device" "$size" "$model"
         done < <(lsblk -ndo NAME,SIZE,RM,MODEL | awk '$3=="1" {$3=""; print $0}')
 
         if [ "$found_devices" = false ]; then
-            echo "No removable devices detected"
+            echo "  No removable devices detected"
         fi
     else
-        echo "lsblk not available (non-Linux system)"
+        echo "  lsblk not available (non-Linux system)"
     fi
 
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
     echo ""
 }
 
@@ -309,49 +310,50 @@ main() {
             IMAGE_SIZE=$(du -h "$IMAGE_FILE" | cut -f1)
 
             # Show image details
-            echo "Image Details"
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-            printf "%-20s %s\n" "File:" "$(basename "$IMAGE_FILE")"
-            printf "%-20s %s\n" "Path:" "$IMAGE_FILE"
-            printf "%-20s %s\n" "Size:" "$IMAGE_SIZE (compressed)"
-            printf "%-20s %s\n" "Format:" "Zstandard compressed (.zst)"
+            echo "📀 IMAGE DETAILS"
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            printf "  %-18s %s\n" "File:" "$(basename "$IMAGE_FILE")"
+            printf "  %-18s %s\n" "Path:" "$IMAGE_FILE"
+            printf "  %-18s %s\n" "Size:" "$IMAGE_SIZE (compressed)"
+            printf "  %-18s %s\n" "Format:" "Zstandard compressed (.zst)"
+            echo ""
             echo ""
 
             # List removable devices
             list_removable_devices
 
             # Show flashing instructions
-            echo "Flash Instructions"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "⚡ FLASH INSTRUCTIONS"
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
             echo ""
-            echo "Replace /dev/sdX with your actual device path from the table above"
+            echo "  Replace /dev/sdX with your actual device path from the table above"
             echo ""
-            echo "# Verify device (double-check this is correct!):"
-            echo "lsblk /dev/sdX"
+            echo "  # Verify device:"
+            echo "  lsblk /dev/sdX"
             echo ""
-            echo "# Unmount any mounted partitions:"
-            echo "sudo umount /dev/sdX*"
+            echo "  # Unmount partitions:"
+            echo "  sudo umount /dev/sdX*"
             echo ""
-            echo "# Flash the image:"
-            echo "zstd -d '$IMAGE_FILE' --stdout | \\"
-            echo "  sudo dd of=/dev/sdX bs=4M status=progress conv=fsync"
+            echo "  # Flash:"
+            echo "  zstd -d '$IMAGE_FILE' --stdout | \\"
+            echo "    sudo dd of=/dev/sdX bs=4M status=progress conv=fsync"
             echo ""
-            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
             echo ""
 
             # Show next steps
-            echo "Next Steps"
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-            echo "1. Flash SD card using the command above"
-            echo "2. Insert SD card into Raspberry Pi"
-            echo "3. Connect Raspberry Pi to ethernet"
-            echo "4. Power on the Raspberry Pi"
-            echo "5. Monitor discovery service logs:"
-            echo "   cd ../discovery-service && docker-compose logs -f"
+            echo "🚀 NEXT STEPS"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "  1. Flash SD card using the command above"
+            echo "  2. Insert SD card into Raspberry Pi"
+            echo "  3. Connect Raspberry Pi to ethernet"
+            echo "  4. Power on the Raspberry Pi"
+            echo "  5. Monitor logs: cd ../discovery-service && docker-compose logs -f"
             echo ""
-            echo "Expected: Pi will auto-configure and register within 5-10 minutes"
-            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "  Expected: Pi will auto-configure within 5-10 minutes"
+            echo ""
             echo ""
             log_info "🎉 Bootstrap image build complete!"
         else
