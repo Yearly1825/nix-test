@@ -5,15 +5,27 @@
     # Disable WiFi completely for bootstrap
     wireless.enable = false;
 
-    # Use NetworkManager for DHCP handling
-    networkmanager.enable = true;
-
-    # Enable DHCP on ethernet interfaces
+    # Use dhcpcd for deterministic routing metrics (prevents cellular modem from taking priority)
     useDHCP = false;
-    interfaces = {
-      eth0.useDHCP = true;
-      end0.useDHCP = true;  # Some Pi models use this interface name
+
+    # Configure eth0 with low metric to ensure it's always preferred over cellular modems
+    interfaces.eth0 = {
+      useDHCP = true;
+      ipv4.routes = [{
+        options = { metric = 10; };
+      }];
     };
+
+    # Set metric via dhcpcd for reliability
+    dhcpcd.extraConfig = ''
+      # Ethernet always gets metric 10 (highest priority)
+      interface eth0
+      metric 10
+
+      # All other interfaces get high metric (fallback only)
+      interface *
+      metric 2000
+    '';
 
     # Basic firewall - allow SSH and discovery service communication
     firewall = {
@@ -29,7 +41,4 @@
     publish.enable = true;
     publish.addresses = true;
   };
-
-  # Ensure network is available before starting bootstrap
-  systemd.services.NetworkManager-wait-online.enable = true;
 }
