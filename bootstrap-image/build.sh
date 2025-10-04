@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Simplified build script that reads from unified deployment configuration
 # Uses .deployment.yaml from the root directory
 
@@ -128,34 +129,31 @@ test_ntfy() {
 # Show configuration summary in a table
 show_config_summary() {
     echo ""
-    echo "┌─────────────────────────┬────────────────────────────────────────────────────────┐"
-    printf "│ %-23s │ %-54s │\n" "Configuration" "Value"
-    echo "├─────────────────────────┼────────────────────────────────────────────────────────┤"
-    printf "│ %-23s │ %-54s │\n" "Deployment Name" "$DEPLOYMENT_NAME"
-    printf "│ %-23s │ %-54s │\n" "Discovery Service" "$DISCOVERY_SERVICE_IP:$DISCOVERY_SERVICE_PORT"
-    printf "│ %-23s │ %-54s │\n" "Config Repository" "$CONFIG_REPO_URL"
-    printf "│ %-23s │ %-54s │\n" "PSK (truncated)" "${DISCOVERY_PSK:0:16}...${DISCOVERY_PSK: -8}"
+    echo "Build Configuration"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    printf "%-25s %s\n" "Deployment Name:" "$DEPLOYMENT_NAME"
+    printf "%-25s %s\n" "Discovery Service:" "$DISCOVERY_SERVICE_IP:$DISCOVERY_SERVICE_PORT"
+    printf "%-25s %s\n" "Config Repository:" "$CONFIG_REPO_URL"
+    printf "%-25s %s\n" "PSK (truncated):" "${DISCOVERY_PSK:0:16}...${DISCOVERY_PSK: -8}"
     if [ "$NTFY_ENABLED" = "true" ]; then
-        printf "│ %-23s │ %-54s │\n" "NTFY Notifications" "✅ Enabled ($NTFY_URL)"
+        printf "%-25s %s\n" "NTFY Notifications:" "✅ Enabled ($NTFY_URL)"
     else
-        printf "│ %-23s │ %-54s │\n" "NTFY Notifications" "❌ Disabled"
+        printf "%-25s %s\n" "NTFY Notifications:" "❌ Disabled"
     fi
-    echo "└─────────────────────────┴────────────────────────────────────────────────────────┘"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo ""
 }
 
 # List removable block devices (potential SD cards)
 list_removable_devices() {
-    echo ""
-    echo "┌─────────────────────────────────────────────────────────────────────────────────┐"
-    printf "│ %-79s │\n" "Available Removable Devices (Filtered: Removable drives only)"
-    echo "├──────────────┬─────────────┬──────────────────────────────────────────────────────┤"
-    printf "│ %-12s │ %-11s │ %-52s │\n" "Device" "Size" "Model"
-    echo "├──────────────┼─────────────┼──────────────────────────────────────────────────────┤"
+    echo "Available Removable Devices (Filtered: Removable drives only)"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
     # Check if lsblk is available (Linux only)
     if command -v lsblk &> /dev/null; then
         local found_devices=false
+        printf "%-15s %-12s %s\n" "Device" "Size" "Model"
+        echo "────────────────────────────────────────────────────────────────────────────────"
         while IFS= read -r line; do
             found_devices=true
             # Parse lsblk output: NAME SIZE MODEL
@@ -163,22 +161,17 @@ list_removable_devices() {
             local size=$(echo "$line" | awk '{print $2}')
             local model=$(echo "$line" | awk '{for(i=3;i<=NF;i++) printf "%s ", $i; print ""}' | sed 's/ *$//')
 
-            # Truncate model if too long
-            if [ ${#model} -gt 52 ]; then
-                model="${model:0:49}..."
-            fi
-
-            printf "│ %-12s │ %-11s │ %-52s │\n" "/dev/$device" "$size" "$model"
+            printf "%-15s %-12s %s\n" "/dev/$device" "$size" "$model"
         done < <(lsblk -ndo NAME,SIZE,RM,MODEL | awk '$3=="1" {$3=""; print $0}')
 
         if [ "$found_devices" = false ]; then
-            printf "│ %-79s │\n" "No removable devices detected"
+            echo "No removable devices detected"
         fi
     else
-        printf "│ %-79s │\n" "lsblk not available (non-Linux system)"
+        echo "lsblk not available (non-Linux system)"
     fi
 
-    echo "└──────────────┴─────────────┴──────────────────────────────────────────────────────┘"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo ""
 }
 
@@ -316,52 +309,49 @@ main() {
             IMAGE_SIZE=$(du -h "$IMAGE_FILE" | cut -f1)
 
             # Show image details
-            echo "┌─────────────────────────────────────────────────────────────────────────────────┐"
-            printf "│ %-79s │\n" "Image Details"
-            echo "├─────────────────────────────────────────────────────────────────────────────────┤"
-            printf "│ %-20s: %-56s │\n" "File" "$(basename "$IMAGE_FILE")"
-            printf "│ %-20s: %-56s │\n" "Path" "$IMAGE_FILE"
-            printf "│ %-20s: %-56s │\n" "Size" "$IMAGE_SIZE (compressed)"
-            printf "│ %-20s: %-56s │\n" "Format" "Zstandard compressed (.zst)"
-            echo "└─────────────────────────────────────────────────────────────────────────────────┘"
+            echo "Image Details"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            printf "%-20s %s\n" "File:" "$(basename "$IMAGE_FILE")"
+            printf "%-20s %s\n" "Path:" "$IMAGE_FILE"
+            printf "%-20s %s\n" "Size:" "$IMAGE_SIZE (compressed)"
+            printf "%-20s %s\n" "Format:" "Zstandard compressed (.zst)"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo ""
 
             # List removable devices
             list_removable_devices
 
             # Show flashing instructions
-            echo "┌─────────────────────────────────────────────────────────────────────────────────┐"
-            printf "│ %-79s │\n" "Flash Instructions"
-            echo "├─────────────────────────────────────────────────────────────────────────────────┤"
-            printf "│ %-79s │\n" ""
-            printf "│ %-79s │\n" "  Replace /dev/sdX with your actual device path from the table above"
-            printf "│ %-79s │\n" ""
-            printf "│ %-79s │\n" "  # Verify device (double-check this is correct!):"
-            printf "│ %-79s │\n" "  lsblk /dev/sdX"
-            printf "│ %-79s │\n" ""
-            printf "│ %-79s │\n" "  # Unmount any mounted partitions:"
-            printf "│ %-79s │\n" "  sudo umount /dev/sdX*"
-            printf "│ %-79s │\n" ""
-            printf "│ %-79s │\n" "  # Flash the image:"
-            printf "│ %-79s │\n" "  zstd -d '$IMAGE_FILE' --stdout | \\"
-            printf "│ %-79s │\n" "    sudo dd of=/dev/sdX bs=4M status=progress conv=fsync"
-            printf "│ %-79s │\n" ""
-            echo "└─────────────────────────────────────────────────────────────────────────────────┘"
+            echo "Flash Instructions"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo ""
+            echo "Replace /dev/sdX with your actual device path from the table above"
+            echo ""
+            echo "# Verify device (double-check this is correct!):"
+            echo "lsblk /dev/sdX"
+            echo ""
+            echo "# Unmount any mounted partitions:"
+            echo "sudo umount /dev/sdX*"
+            echo ""
+            echo "# Flash the image:"
+            echo "zstd -d '$IMAGE_FILE' --stdout | \\"
+            echo "  sudo dd of=/dev/sdX bs=4M status=progress conv=fsync"
+            echo ""
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
             echo ""
 
             # Show next steps
-            echo "┌─────────────────────────────────────────────────────────────────────────────────┐"
-            printf "│ %-79s │\n" "Next Steps"
-            echo "├─────────────────────────────────────────────────────────────────────────────────┤"
-            printf "│ %-79s │\n" "  1. Flash SD card using the command above"
-            printf "│ %-79s │\n" "  2. Insert SD card into Raspberry Pi"
-            printf "│ %-79s │\n" "  3. Connect Raspberry Pi to ethernet"
-            printf "│ %-79s │\n" "  4. Power on the Raspberry Pi"
-            printf "│ %-79s │\n" "  5. Monitor discovery service logs:"
-            printf "│ %-79s │\n" "     cd ../discovery-service && docker-compose logs -f"
-            printf "│ %-79s │\n" ""
-            printf "│ %-79s │\n" "  Expected: Pi will auto-configure and register within 5-10 minutes"
-            printf "│ %-79s │\n" ""
-            echo "└─────────────────────────────────────────────────────────────────────────────────┘"
+            echo "Next Steps"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "1. Flash SD card using the command above"
+            echo "2. Insert SD card into Raspberry Pi"
+            echo "3. Connect Raspberry Pi to ethernet"
+            echo "4. Power on the Raspberry Pi"
+            echo "5. Monitor discovery service logs:"
+            echo "   cd ../discovery-service && docker-compose logs -f"
+            echo ""
+            echo "Expected: Pi will auto-configure and register within 5-10 minutes"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
             echo ""
             log_info "🎉 Bootstrap image build complete!"
         else
