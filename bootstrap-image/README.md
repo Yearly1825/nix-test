@@ -1,328 +1,118 @@
-# Bootstrap Image Builder
+# SD Card Image Builder
 
-Builds NixOS SD card images for Raspberry Pi with integrated discovery service support.
+**Creates custom SD card images that configure your Raspberry Pis automatically.**
 
-## Quick Start
+## Quick Build
 
-### 🎯 **Unified Configuration (Recommended)**
-
-Use the simplified build process with shared configuration:
-
+**Step 1:** Configure everything (if you haven't already):
 ```bash
-# 1. Configure deployment (if not done already)
 cd .. && python3 setup_deployment.py
+```
 
-# 2. Build image (reads config automatically)
+**Step 2:** Build your custom image:
+```bash
 cd bootstrap-image && ./build.sh
 ```
 
-**✅ Benefits:** No parameters needed, NTFY testing, shared configuration
+**That's it!** You'll get a `.img.zst` file ready to flash to SD cards.
 
-### 📋 **Legacy Methods (Alternative)**
 
-#### Method 1: Parameter-based Build Script
 
-```bash
-# Generate PSK
-python3 ../discovery-service/generate_psk.py
+## First Time Setup
 
-# Build image
-./build-image.sh -p <your-64-char-psk>
-```
+**Need to install prerequisites?** See the "Prerequisites Installation" section in the main README.
 
-#### Method 2: Direct Nix Commands
+The build script automatically:
+- Detects your platform (x86_64 → aarch64 cross-compilation)  
+- Adds stability flags for CachyOS/Arch systems
+- Handles all the technical details for you
 
-```bash
-# Set your parameters
-export DISCOVERY_PSK="your-64-char-hex-psk"
-export DISCOVERY_SERVICE_IP="192.168.1.100" 
-export CONFIG_REPO_URL="github:yourusername/nixos-pi-configs"
+**Just run `./build.sh` and it works!**
 
-# Build directly with nix
-nix build .#bootstrap-image --show-trace
-```
+## What You Need
 
-## Build Methods Comparison
-
-| Method | Pros | Cons | Best For |
-|--------|------|------|----------|
-| **Build Script** | Parameter validation, cross-platform detection, user-friendly | Less transparent, script dependency | First-time users, development |
-| **Direct Nix** | Full transparency, easy CI/CD integration, no hidden logic | Manual parameter handling, platform detection | CI/CD, advanced users |
-| **Flake Helpers** | Automatic platform detection, transparent, consistent | Requires understanding of flake structure | Power users, automation |
-
-📖 **For complete transparency, see [Bootstrap Commands](../docs/bootstrap-commands.md) for all direct build commands.**
-
-## Cross-Platform Building
-
-### From x86_64 (CachyOS, most desktops) → aarch64 (Raspberry Pi)
-
-**Using Build Script:**
-```bash
-./build-image.sh -p <psk>  # Automatically detects cross-compilation
-```
-
-**Using Direct Nix Commands:**
-```bash
-# Set environment variables first
-export DISCOVERY_PSK="your-psk"
-export DISCOVERY_SERVICE_IP="192.168.1.100"
-
-# Required arguments for cross-compilation
-nix build .#bootstrap-image \
-  --system aarch64-linux \
-  --extra-platforms aarch64-linux \
-  --show-trace
-```
-
-### CachyOS Prerequisites and Setup
-
-**First-time CachyOS users:** You need to install Nix before building:
-
-```bash
-# Install Nix (required for building NixOS images)
-curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
-
-# Configure Nix for cross-compilation
-mkdir -p ~/.config/nix
-cat >> ~/.config/nix/nix.conf << 'EOF'
-experimental-features = nix-command flakes
-extra-platforms = aarch64-linux
-max-jobs = auto
-cores = 0
-EOF
-
-# Add yourself as trusted user (CRITICAL)
-echo "trusted-users = root $USER" | sudo tee -a /etc/nix/nix.conf
-
-# Restart daemon and reload shell
-sudo systemctl restart nix-daemon
-source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
-```
-
-**See: [Complete CachyOS Setup Guide](../docs/cachyos-setup.md)**
-
-The build script automatically detects CachyOS and adds stability flags (`--option sandbox false --max-jobs 1`).
-
-## Requirements
-
-### Hardware Requirements
-- **Ethernet connection** - Required for bootstrap process
-- WiFi is disabled during bootstrap for security and reliability
-- SD card (16GB+ recommended)
+**For Your Raspberry Pi:**
 - Raspberry Pi 4 (2GB+ RAM recommended)
+- 16GB+ SD card
+- **Ethernet cable** (WiFi disabled during setup for security)
+- DHCP network with internet access
 
-### Network Requirements
-- DHCP-enabled ethernet network
-- Internet access for downloading packages
-- Access to discovery service IP
+**The build script automatically gets everything else from your configuration!**
 
-## Configuration
-
-### Required Parameters
-
-| Parameter | Description | Example |
-|-----------|-------------|---------|
-| `DISCOVERY_PSK` | 64-character hex PSK | `abc123def456...` |
-| `DISCOVERY_SERVICE_IP` | Discovery service IP | `192.168.1.100` |
-| `CONFIG_REPO_URL` | Your NixOS config repo | `github:user/configs` |
-
-### Build Script Options
+## Build Options
 
 ```bash
-./build-image.sh [OPTIONS]
+./build.sh [OPTIONS]
 
 Options:
-  -p, --psk <PSK>      Discovery service PSK (required)
-  -i, --ip <IP>        Discovery service IP (default: 192.168.1.100)
-  -r, --repo <REPO>    Config repository URL
-  -o, --output <DIR>   Output directory (default: ./result)
+  --ntfy-test          Test notifications before building
+  -o, --output <DIR>   Put image in different folder  
   -h, --help           Show help
 ```
 
-## Direct Nix Commands Reference
+**Most of the time you just run:** `./build.sh`
 
-### Environment Variable Method
 
-```bash
-# Set parameters
-export DISCOVERY_PSK="your-psk"
-export DISCOVERY_SERVICE_IP="192.168.1.100"
-export CONFIG_REPO_URL="github:user/repo"
 
-# Native build (aarch64 host)
-nix build .#bootstrap-image
+## Complete Workflow
 
-# Cross-compilation (x86_64 → aarch64)  
-nix build .#bootstrap-image \
-  --system aarch64-linux \
-  --extra-platforms aarch64-linux
-```
-
-### Inline Parameter Method
-
-```bash
-# Build with inline parameters
-nix build --expr '
-let
-  flake = builtins.getFlake (toString ./.);
-in
-(flake.lib.buildBootstrapImage {
-  discoveryPsk = "your-psk";
-  discoveryServiceIp = "192.168.1.100"; 
-  configRepoUrl = "github:user/repo";
-}).config.system.build.sdImage' \
---system aarch64-linux \
---extra-platforms aarch64-linux
-```
-
-### Using Nix with Arguments
-
-```bash
-nix build .#packages.aarch64-linux.default \
-  --override-input discoveryPsk "your-psk" \
-  --override-input discoveryServiceIp "192.168.1.100"
-```
-
-## Development Workflow
-
-### 1. Generate PSK
-```bash
-cd ../discovery-service
-python3 generate_psk.py
-# Copy the generated PSK
-```
-
-### 2. Test Build (choose one method)
-
-**Script method:**
-```bash
-./build-image.sh -p <psk> -i <ip> -r <repo>
-```
-
-**Direct method:**
-```bash
-DISCOVERY_PSK=<psk> DISCOVERY_SERVICE_IP=<ip> \
-nix build .#custom-bootstrap.config.system.build.sdImage --show-trace
-```
-
-### 3. Flash Image
-```bash
-# Find your SD card device
-lsblk
-
-# Flash (replace sdX with your device)
-sudo dd if=result/nixos-sd-image-*.img of=/dev/sdX bs=4M status=progress sync
-```
-
-### 4. Boot and Monitor
-```bash
-# Start discovery service
-cd ../discovery-service
-docker-compose up -d
-
-# Boot Raspberry Pi with ETHERNET CONNECTED
-# WiFi is disabled during bootstrap - ethernet is required
-
-# Monitor logs
-docker-compose logs -f discovery-service
-```
-
-## Troubleshooting
-
-### Quick Diagnosis
-
-**Error: "nix: command not found"**
-- Install Nix: See [CachyOS Setup Guide](../docs/cachyos-setup.md)
-
-**Error: "system aarch64-linux not supported"**  
-- Add trusted user: `echo "trusted-users = root $USER" | sudo tee -a /etc/nix/nix.conf`
-- Restart daemon: `sudo systemctl restart nix-daemon`
-
-**Error: Configuration not found**
-- Run unified setup: `cd .. && python3 setup_deployment.py`
-
-### Comprehensive Guides
-
-For detailed troubleshooting, see:
-- **[CachyOS Setup Guide](../docs/cachyos-setup.md)** - Prerequisites and initial setup
-- **[Bootstrap Troubleshooting](../docs/bootstrap-troubleshooting.md)** - CachyOS-specific build issues  
-- **[Bootstrap Walkthrough](../docs/bootstrap-walkthrough.md)** - Step-by-step resolution guide
-
-### Quick Fixes
-
-**Build fails on CachyOS:** The build script automatically adds stability flags (`--option sandbox false --max-jobs 1`)
-
-**PSK validation fails:** Use unified configuration:
+### 1. Configure (Once)
 ```bash
 cd .. && python3 setup_deployment.py
 ```
 
-**Cross-compilation issues:** Build script automatically detects and adds required flags
-
-## Security Considerations
-
-⚠️ **Important:** The built image contains your PSK embedded in the filesystem.
-
-**Best Practices:**
-- Generate unique PSK per deployment
-- Limit physical access to SD cards
-- Rotate PSKs periodically
-- Don't share built images
-
-## Advanced Usage
-
-### Custom Output Location
+### 2. Build Image
 ```bash
-nix build .#custom-bootstrap.config.system.build.sdImage -o custom-image
+./build.sh
 ```
 
-### Debug Build
+### 3. Flash to SD Card
 ```bash
-nix build .#custom-bootstrap.config.system.build.sdImage --show-trace --verbose
+# Find your SD card
+lsblk
+
+# Flash (CAREFUL: Replace sdX with your actual device!)
+zstd -d result/sd-image/*.img.zst --stdout | sudo dd of=/dev/sdX bs=4M status=progress
 ```
 
-### Build for Different Architectures
+### 4. Boot and Watch
 ```bash
-# For x86_64 testing (won't work on real Pi)
-nix build .#custom-bootstrap.config.system.build.sdImage --system x86_64-linux
+# Start discovery service (if not running)
+cd ../discovery-service && docker-compose up -d
+
+# Insert SD card in Pi, connect ethernet, power on
+# Check logs to see your Pi register:
+docker-compose logs -f discovery-service
 ```
 
-### Integration with CI/CD
+**Your Pi will automatically configure itself in ~10 minutes!**
 
-**GitHub Actions example:**
-```yaml
-- name: Build Bootstrap Image
-  run: |
-    export DISCOVERY_PSK="${{ secrets.DISCOVERY_PSK }}"
-    nix build .#custom-bootstrap.config.system.build.sdImage \
-      --system aarch64-linux --extra-platforms aarch64-linux
-```
+## Something Wrong?
 
-**Makefile integration:**
-```makefile
-ARCH := $(shell uname -m)
-CROSS_ARGS := $(if $(filter-out aarch64,$(ARCH)),--system aarch64-linux --extra-platforms aarch64-linux)
+**Common issues and quick fixes:**
 
-build:
-	nix build .#custom-bootstrap.config.system.build.sdImage $(CROSS_ARGS)
-```
+**Error: "nix: command not found"**
+→ Install Nix: See "Prerequisites Installation" in the main README
 
-## Files Overview
+**Error: "Configuration not found"**  
+→ Run setup first: `cd .. && python3 setup_deployment.py`
 
-| File | Purpose |
-|------|---------|
-| `flake-updated.nix` | Enhanced flake with parameter injection |
-| `configuration-updated.nix` | Bootstrap system configuration |
-| `build-image.sh` | User-friendly build script |
-| `README.md` | This documentation |
+**Build fails**
+→ Check prerequisites in main README and ensure configuration is complete
 
-## Next Steps
+**The build script handles most issues automatically!**
+
+## Security Note
+
+⚠️ **Your built image contains your security keys** - don't share the `.img.zst` file with others.
+
+## What's Next?
 
 After building your image:
 
-1. **Flash to SD card** using `dd` or similar tool
-2. **Boot Pi** with ethernet connection  
-3. **Monitor discovery service** for device registration
-4. **Verify bootstrap** completion via logs or NTFY
+1. **Flash to SD cards:** `zstd -d result/sd-image/*.img.zst --stdout | sudo dd of=/dev/sdX bs=4M status=progress`
+2. **Boot Pis with ethernet**  
+3. **Watch discovery service logs:** `docker-compose logs -f discovery-service`
+4. **Pis configure themselves automatically!**
 
-For the main sensor configuration, see the [main README](../README.md) for flake target setup requirements.
+For more help, see the [main README](../README.md).
